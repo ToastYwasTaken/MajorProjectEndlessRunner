@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -31,9 +32,9 @@ public class PlayerController : MonoBehaviour
     float SpeedVertical = 5f;
     [SerializeField]
     float SpeedHorizontal = 5f;
+    //TODO: FineTune these values:
     [SerializeField]
     float JumpForce = 200f;
-    //TODO: FineTune these values:
     [SerializeField]
     float AccellerationVertical = 0.1f;
     [SerializeField]
@@ -47,6 +48,7 @@ public class PlayerController : MonoBehaviour
     private Quaternion m_pSpawnRotation = new Quaternion(0, 0, 0, 0);
     private Rigidbody m_RB;
     private Transform m_orientation;
+    private float m_fallspeed;
 
 
     void Start()
@@ -61,6 +63,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         Jump();
+        Fall();
     }
 
     private void Jump()
@@ -74,6 +77,11 @@ public class PlayerController : MonoBehaviour
             m_RB.AddForce(transform.up * JumpForce, ForceMode.Impulse);
             m_pIsGrounded = false;
         }
+    }
+    private void Fall()
+    {
+        m_fallspeed = m_RB.velocity.y + Physics.gravity.y * Time.deltaTime;
+
     }
 
     private void FixedUpdate()
