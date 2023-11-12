@@ -4,7 +4,7 @@ using UnityEngine;
 /******************************************************************************
  * Project: MajorProjectEndlessRunner
  * File: ReadOnlyAttribute.cs
- * Version: 1.12
+ * Version: 1.0
  * Autor: It3ration
  * Source: https://discussions.unity.com/t/how-to-make-a-readonly-property-in-inspector/75448
  * 

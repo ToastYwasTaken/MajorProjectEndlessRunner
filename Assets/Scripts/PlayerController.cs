@@ -5,10 +5,8 @@ using UnityEngine;
 /******************************************************************************
  * Project: MajorProjectEndlessRunner
  * File: PlayerController.cs
- * Version: 1.12
+ * Version: 1.0
  * Autor: Franz M?rike (FM)
- * Note: This script is based on a group project GPA4300 with Ren? Kraus (RK), Franz M?rike (FM) and Jan Pagel (JP). 
- * The script was modified as stated in the ChangeLog to suit this project.
  * 
  * These coded instructions, statements, and computer programs contain
  * proprietary information of the author and are protected by Federal
@@ -18,91 +16,113 @@ using UnityEngine;
  * 
  * ChangeLog
  * ----------------------------
- *  18.08.2022   FM  created
+ *  18.08.2023   FM  created
  *  14.09.2023   FM  removed unnecessary parts
  *  06.10.2023   FM  added horizontal continous movement, adjusted values, added seperated acceleration and speed variables
+ *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug where Rigidbody speed was accidentally overwritten
+ *  
+ *  TODO: 
+ *      - Scale accelleration accordingly
+ *  
+ *  Buglist:
+ *      - Player sticking to the wall when holding left or right respectively
  *  
  *****************************************************************************/
 public class PlayerController : MonoBehaviour
 {
     //Variables
     [SerializeField]
-    float RBMass = 50f;
+    private float speedVertical = 5f; //initial speed moving forward
     [SerializeField]
-    float SpeedVertical = 5f;
+    private float speedHorizontal = 5f; //initial speed moving left and right
     [SerializeField]
-    float SpeedHorizontal = 5f;
-    //TODO: FineTune these values:
-    [SerializeField]
-    float JumpForce = 200f;
-    [SerializeField]
-    float AccellerationVertical = 0.1f;
-    [SerializeField]
-    float AccellerationHorizontal = 0.05f;
+    private const float jumpForce = 10f;    //jump force multiplier
+    [SerializeField, ReadOnly]
+    private float rbVelocityY;  //velocity of rb, applied by gravity, jumping and falling / only for debugging purposes displayed
+    [SerializeField, ReadOnly]
+    private bool isGrounded;   
+    [SerializeField, ReadOnly]
+    private static Vector3 scaledGravityVector; //gravity applied to the player
 
-    [ReadOnly]
-    public bool m_pIsGrounded;
-
-    private Vector3 m_pSpawnPosition = new Vector3(0, 1.5f, 0);
-    private Vector3 m_moveDirection;
-    private Quaternion m_pSpawnRotation = new Quaternion(0, 0, 0, 0);
-    private Rigidbody m_RB;
-    private Transform m_orientation;
-    private float m_fallspeed;
-
+    private const float c_accellerationVertical = 0.1f; //accelleration moving forward
+    private const float c_accellerationHorizontal = 0.05f;  //accelleration moving left and right
+    private const float c_rbMass = 1f;
+    private const float c_fallSpeedMultiplier = 2.8f;
+    private const float c_gravityConstant = -9.81f;
+    private const float gravityScale = 1.5f;    //scale factor for the gravity
+    private static Vector3 s_spawnPosition = new Vector3(0, 1.5f, 0);
+    private static Quaternion s_spawnRotation = new Quaternion(0, 0, 0, 0);
+    private Rigidbody m_rb;
 
     void Start()
     {
-        m_RB = transform.GetComponent<Rigidbody>();
-        m_RB.mass = RBMass;
-        m_orientation = transform.GetChild(1).GetComponent<Transform>();
-        transform.position = m_pSpawnPosition;
-        transform.rotation = m_pSpawnRotation;
+        m_rb = transform.GetComponent<Rigidbody>();
+        m_rb.mass = c_rbMass;
+        //Spawn player
+        transform.position = s_spawnPosition;
+        transform.rotation = s_spawnRotation;
     }
 
     void Update()
     {
-        Jump();
-        Fall();
-    }
-
-    private void Jump()
-    {
         //Updating speed values
-        SpeedVertical += Time.deltaTime * AccellerationVertical;
-        SpeedHorizontal += Time.deltaTime * AccellerationHorizontal;
+        speedVertical += Time.deltaTime * c_accellerationVertical;
+        speedHorizontal += Time.deltaTime * c_accellerationHorizontal;
 
-        if (Input.GetKeyDown(KeyCode.Space) && m_pIsGrounded)
-        {
-            m_RB.AddForce(transform.up * JumpForce, ForceMode.Impulse);
-            m_pIsGrounded = false;
-        }
+        PlayerFall();
+        PlayerJump(); 
+        
     }
-    private void Fall()
-    {
-        m_fallspeed = m_RB.velocity.y + Physics.gravity.y * Time.deltaTime;
 
+    private void PlayerJump()
+    {
+        //Allows jump if pressing 'space' and grounded
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            m_rb.velocity = Vector3.up * jumpForce;
+            isGrounded = false;
+            rbVelocityY = m_rb.velocity.y;
+        }
+
+    }
+    private void PlayerFall()
+    {
+        //calculating quicker fall
+        if (m_rb.velocity.y < 0)
+        {
+            m_rb.velocity += Vector3.up * scaledGravityVector.y * (c_fallSpeedMultiplier - 1) * Time.deltaTime;
+            rbVelocityY = m_rb.velocity.y;
+        }
     }
 
     private void FixedUpdate()
     {
-        Movement();
+        ApplyDefaultGravity();
+        ApplyMovement();
     }
 
-    private void Movement()
+    /// <summary>
+    /// Calculate gravity by Code to add a gravityScale for quicker Falling / Jumping
+    /// </summary>
+    private void ApplyDefaultGravity()
+    {
+        scaledGravityVector = c_gravityConstant * gravityScale * Vector3.up;
+        m_rb.AddForce(scaledGravityVector, ForceMode.Acceleration);
+        rbVelocityY = m_rb.velocity.y;
+    }
+
+    private void ApplyMovement()
     {
         //Setting up keyInputs, Ignoring vertical movement inputs
         Vector3 keyInput = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
 
-        m_moveDirection =  m_orientation.right * keyInput.x;
-        //Apply user input horizontal movement and apply continous vertical movement
-        m_RB.velocity = m_moveDirection * SpeedHorizontal + m_orientation.forward * SpeedVertical;
-
+        //Apply user input horizontal movement, continous vertical movement and jump movement
+        m_rb.velocity = new Vector3(speedHorizontal * keyInput.x, m_rb.velocity.y, speedVertical);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground")) m_pIsGrounded = true;
+        if (collision.gameObject.CompareTag("Ground")) isGrounded = true;
     }
 }
 

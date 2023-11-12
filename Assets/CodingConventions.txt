@@ -1,0 +1,20 @@
+Fields and Variables
+
+public: Pascal Case
+SerializeField: Camel Case
+private: Camel Case
+constant: Prefix c_
+member variable: Prefix m_
+static variable: Prefic s_
+________________________________________________________
+
+Classes
+
+Pascal Case
+Interface: Prefix I
+________________________________________________________
+
+Methods
+
+Pascal Case; for parameters: Camel Case
+Descriptive start of the phrase (Set, Get, Is, Find, ...)
