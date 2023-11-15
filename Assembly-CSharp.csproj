@@ -61,6 +61,7 @@
     <Compile Include="Assets\Scripts\GameModeController.cs" />
     <Compile Include="Assets\Scripts\ProceduralGeneration.cs" />
     <Compile Include="Assets\Scripts\CustomEditor\ReadOnlyAttribute.cs" />
+    <Compile Include="Assets\Scripts\Template.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\CameraController.cs" />
   </ItemGroup>

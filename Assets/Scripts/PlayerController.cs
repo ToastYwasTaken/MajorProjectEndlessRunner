@@ -30,34 +30,39 @@ using UnityEngine;
  *****************************************************************************/
 public class PlayerController : MonoBehaviour
 {
-    //Variables
+    [SerializeField]
+    private GameObject ProceduralGeneratorGO;
     [SerializeField]
     private float speedVertical = 5f; //initial speed moving forward
     [SerializeField]
     private float speedHorizontal = 5f; //initial speed moving left and right
-    [SerializeField]
-    private const float jumpForce = 10f;    //jump force multiplier
     [SerializeField, ReadOnly]
     private float rbVelocityY;  //velocity of rb, applied by gravity, jumping and falling / only for debugging purposes displayed
     [SerializeField, ReadOnly]
     private bool isGrounded;   
     [SerializeField, ReadOnly]
-    private static Vector3 scaledGravityVector; //gravity applied to the player
+    private Vector3 scaledGravityVector; //gravity applied to the player
 
-    private const float c_accellerationVertical = 0.1f; //accelleration moving forward
-    private const float c_accellerationHorizontal = 0.05f;  //accelleration moving left and right
+    private const float c_jumpForce = 10f;    //jump force multiplier
+    private const float c_startingAccellerationVertical = 0.05f; //accelleration moving forward
     private const float c_rbMass = 1f;
     private const float c_fallSpeedMultiplier = 2.8f;
     private const float c_gravityConstant = -9.81f;
     private const float gravityScale = 1.5f;    //scale factor for the gravity
+    private float c_startingAccellerationHorizontal;  //accelleration moving left and right
     private static Vector3 s_spawnPosition = new Vector3(0, 1.5f, 0);
     private static Quaternion s_spawnRotation = new Quaternion(0, 0, 0, 0);
     private Rigidbody m_rb;
+    private ProceduralGeneration m_proceduralGeneratorRef;
+    private float speedModifier;
 
     void Start()
     {
         m_rb = transform.GetComponent<Rigidbody>();
         m_rb.mass = c_rbMass;
+        m_proceduralGeneratorRef = ProceduralGeneratorGO.GetComponent<ProceduralGeneration>();
+
+        c_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
         //Spawn player
         transform.position = s_spawnPosition;
         transform.rotation = s_spawnRotation;
@@ -65,13 +70,17 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        //Updating speed values
-        speedVertical += Time.deltaTime * c_accellerationVertical;
-        speedHorizontal += Time.deltaTime * c_accellerationHorizontal;
-
+        UpdatePlayerSpeed();
         PlayerFall();
-        PlayerJump(); 
-        
+        PlayerJump();
+        //Debug.Log(this.transform.position);
+    }
+
+    private void UpdatePlayerSpeed()
+    {
+        speedModifier = m_proceduralGeneratorRef.GetSpeedModifier();
+        speedVertical += Time.deltaTime * c_startingAccellerationVertical * speedModifier;
+        speedHorizontal += Time.deltaTime * c_startingAccellerationHorizontal * speedModifier;
     }
 
     private void PlayerJump()
@@ -79,7 +88,7 @@ public class PlayerController : MonoBehaviour
         //Allows jump if pressing 'space' and grounded
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            m_rb.velocity = Vector3.up * jumpForce;
+            m_rb.velocity = Vector3.up * c_jumpForce;
             isGrounded = false;
             rbVelocityY = m_rb.velocity.y;
         }
@@ -122,7 +131,29 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground")) isGrounded = true;
+        if (collision.gameObject.CompareTag("Ground")) 
+        {
+            isGrounded = true;
+        }
+        else if (collision.gameObject.CompareTag("WallLeft"))
+        {
+
+        }
+        else if (collision.gameObject.CompareTag("WallRight"))
+        {
+
+        }
+        else if (collision.gameObject.CompareTag("Obstacle"))
+        {
+
+        }
     }
+
+    public float GetVerticalSpeed()
+    {
+        return speedVertical;
+    }
+
+
 }
 

@@ -13,8 +13,8 @@ GameObject:
   - component: {fileID: 1138523075240755077}
   - component: {fileID: 5469838032989101171}
   m_Layer: 0
-  m_Name: Wall Left
-  m_TagString: Untagged
+  m_Name: Wall Right
+  m_TagString: WallRight
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -118,8 +118,8 @@ GameObject:
   - component: {fileID: 8504015000722904006}
   - component: {fileID: 6953853365741068796}
   m_Layer: 0
-  m_Name: Wall Right
-  m_TagString: Untagged
+  m_Name: Wall Left
+  m_TagString: WallLeft
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
