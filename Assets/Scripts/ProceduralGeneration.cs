@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 /******************************************************************************
  * Project: MajorProjectEndlessRunner
@@ -16,7 +17,11 @@ using UnityEngine;
  * 
  * ChangeLog
  * ----------------------------
- *  15.11.2023   FM  created
+ *  15.11.2023   FM  created, implemented spawning behaviour for Templates, 
+ *                   including offsets to increase the size of the templates according to the players speed increase
+ *  16.11.2023   FM  added proper spawn location for templates
+ *  
+ *  TODO: Fix Render distance
  *  
  *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
@@ -28,24 +33,30 @@ public class ProceduralGeneration : MonoBehaviour
     [SerializeField]
     private GameObject templateRef;
 
-    private List<GameObject> m_templateList;
+    private List<GameObject> m_templateList = new List<GameObject>();
     private float m_playerPositionZ;
     private const float c_renderDistance = 40f;
 
-    private GameObject m_nextTemplateToSpawn;
-    private Vector3 m_nextTemplateSpawnPosition;
-    private float m_nextTemplateScale;
-    private bool m_nextTemplateSpawned = false;
-    private float m_lastTemplateScale;
-
+    //Template Variables
+    private GameObject m_templateToSpawn;
+    private Vector3 m_templateSpawnPosition;
+    private Quaternion m_templateSpawnRotation;
+    private float m_groundScaleZ;
+    private bool m_templateSpawned = false;
     private int m_templateCounter = 0;
-
     private float m_templateLengthToSpeedRatio;
+    private float m_spawnPositionOffsetZ = 0f;
+    private const float c_templateScaleX = 10f;
+    private const float c_templateScaleY = 1f;
+
+
     private float m_speedModifier = 1f;
+    private float m_platformSizeIncrease = 5f;
 
     private void Start()
     {
-        GenerateInitialTemplates();
+        SetUpInitialTemplate();
+        SpawnTemplate(m_templateToSpawn, m_templateSpawnPosition, m_templateSpawnRotation);
     }
 
 
@@ -53,50 +64,65 @@ public class ProceduralGeneration : MonoBehaviour
     {
         //Update Player Speed
         m_playerPositionZ = playerRef.transform.position.z;
-        //Debug.Log(m_nextTemplateSpawnPosition + " " + m_playerPositionZ);
+        Debug.Log("tempSpawnPos: " + m_templateSpawnPosition.z + " playerPos: " + m_playerPositionZ);
 
-        CalculateNextTemplateValues();
-
-        if (m_nextTemplateSpawnPosition.z - m_playerPositionZ < c_renderDistance && !m_nextTemplateSpawned)
-        {        
-            //Calculate next Template starting location
-            m_nextTemplateSpawnPosition = CalculateNextTemplateSpawnPosition();
+        //Generate new Templates while renderdistance is not too far away
+        if (m_templateSpawnPosition.z - m_playerPositionZ < c_renderDistance && !m_templateSpawned)
+        {
+            CalculateNextTemplateValues();
             //Spawn next Template
-            //SpawnNextTemplate(m_nextTemplateToSpawn, m_nextTemplateSpawnPosition, m_nextTemplateScale);
-            m_nextTemplateSpawned = true;
+            SpawnTemplate(m_templateToSpawn, m_templateSpawnPosition, m_templateSpawnRotation);
+            //Updating templates
+            m_templateSpawned = true;
             //UpdatePlayerSpeedModifier();
         }
-        if(m_playerPositionZ == m_nextTemplateSpawnPosition.z)
+        if (m_playerPositionZ == m_templateSpawnPosition.z)
         {
-            m_nextTemplateSpawned = false;
+            m_templateSpawned = false;
         }
     }
-    private void GenerateInitialTemplates()
+
+    /// <summary>
+    /// Setting up the starting template and instantiating it
+    /// </summary>
+    private void SetUpInitialTemplate()
     {
-        Instantiate(startingTemplateRef);
-        m_templateList.Add(startingTemplateRef);
-        CalculateNextTemplateValues();
+        m_templateToSpawn = startingTemplateRef;
+        m_groundScaleZ = startingTemplateRef.transform.GetChild(0).GetChild(0).localScale.z;
+        m_spawnPositionOffsetZ = m_groundScaleZ / 2;
+        m_templateSpawnPosition = playerRef.transform.position + new Vector3(0, -1.5f, m_spawnPositionOffsetZ);  //-1.5f is the height of player spawn offset
+        m_templateSpawnRotation = Quaternion.identity;
     }
 
+
+    /// <summary>
+    /// Updating m_groundScaleZ, m_templateSpawnPosition and calculating m_templateLengthToSpeedRatio which increases 
+    /// with increasing player speed, also resulting in longer templates being instantiated
+    /// </summary>
     private void CalculateNextTemplateValues()
     {
-        m_templateLengthToSpeedRatio = playerRef.GetComponent<PlayerController>().GetVerticalSpeed() / startingTemplateRef.transform.GetChild(0).GetChild(0).localScale.z;
-        //Debug.Log( " vertical speed: " + playerRef.GetComponent<PlayerController>().GetVerticalSpeed() + "playerPosZ: " + playerRef.transform.position.z + " ratio:" + m_templateLengthToSpeedRatio);
-        m_lastTemplateScale = m_templateList[m_templateCounter].transform.localScale.z;
-        m_nextTemplateScale =  + m_lastTemplateScale * m_templateLengthToSpeedRatio;   //scale faktor * speed faktor (gerundet)
-        m_nextTemplateSpawnPosition = m_lastTemplateScale + m_lastTemplateSpawnPosition;
+        m_templateLengthToSpeedRatio = playerRef.GetComponent<PlayerController>().GetVerticalSpeed() / m_groundScaleZ;
+        //Update groundScaleZ
+        m_templateSpawnPosition = new Vector3 (0,0,m_groundScaleZ) + m_templateSpawnPosition;
+        //Increasing platform size for next platform
+        m_groundScaleZ += m_platformSizeIncrease;
+        //Increasing the increase for future spawns to counter shorter sections in higher speeds
+        m_platformSizeIncrease += 2;
     }
 
-    private void SpawnNextTemplate(GameObject _templateToSpawn, Vector3 _templateSpawnPosition, Vector3 _templateScale)
+    private void SpawnTemplate(GameObject _templateToSpawn, Vector3 _templateSpawnPosition, Quaternion _templateSpawnRotation)
     {
-        throw new NotImplementedException();
+        var template = Instantiate(_templateToSpawn, _templateSpawnPosition, _templateSpawnRotation);
+        m_templateList.Add(template);
+        UpdatePlayerSpeedModifier();
+        Debug.Log("Spawned Template nr."+ m_templateList.Count +" at: " + _templateSpawnPosition);
     }
 
-    private Vector3 CalculateNextTemplateSpawnPosition()
-    {
-        return new Vector3(0,0,0);
-    }
 
+    /// <summary>
+    /// This updates the playerspeed to accellerate slower so the speed doesn't get too fast that quick
+    /// It's updated whenever new Templates are spawned
+    /// </summary>
     private void UpdatePlayerSpeedModifier()
     {
         m_speedModifier -= 0.05f;

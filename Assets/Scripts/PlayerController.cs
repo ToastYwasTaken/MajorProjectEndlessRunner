@@ -73,7 +73,6 @@ public class PlayerController : MonoBehaviour
         UpdatePlayerSpeed();
         PlayerFall();
         PlayerJump();
-        //Debug.Log(this.transform.position);
     }
 
     private void UpdatePlayerSpeed()

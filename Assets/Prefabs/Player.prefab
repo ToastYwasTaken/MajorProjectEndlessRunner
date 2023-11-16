@@ -48,13 +48,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4892b429b29e724c9c49a2b461e330e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RBMass: 1
-  SpeedVertical: 5
-  SpeedHorizontal: 5
-  JumpForce: 180
-  AccellerationVertical: 0.1
-  AccellerationHorizontal: 0.1
-  m_pIsGrounded: 0
+  ProceduralGeneratorGO: {fileID: 0}
+  speedVertical: 5
+  speedHorizontal: 5
+  rbVelocityY: 0
+  isGrounded: 0
+  scaledGravityVector: {x: 0, y: 0, z: 0}
 --- !u!54 &7116387897715078676
 Rigidbody:
   m_ObjectHideFlags: 0
