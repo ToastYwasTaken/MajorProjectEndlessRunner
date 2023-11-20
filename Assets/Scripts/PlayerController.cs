@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 /******************************************************************************
  * Project: MajorProjectEndlessRunner
@@ -31,7 +32,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
-    private GameObject ProceduralGeneratorGO;
+    private GameObject proceduralGeneratorGO;
     [SerializeField]
     private float speedVertical = 5f; //initial speed moving forward
     [SerializeField]
@@ -54,13 +55,14 @@ public class PlayerController : MonoBehaviour
     private static Quaternion s_spawnRotation = new Quaternion(0, 0, 0, 0);
     private Rigidbody m_rb;
     private ProceduralGeneration m_proceduralGeneratorRef;
-    private float speedModifier;
+    private float m_speedModifier;
+    private Vector3 m_keyInput;
 
     void Start()
     {
         m_rb = transform.GetComponent<Rigidbody>();
         m_rb.mass = c_rbMass;
-        m_proceduralGeneratorRef = ProceduralGeneratorGO.GetComponent<ProceduralGeneration>();
+        m_proceduralGeneratorRef = proceduralGeneratorGO.GetComponent<ProceduralGeneration>();
 
         c_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
         //Spawn player
@@ -77,9 +79,9 @@ public class PlayerController : MonoBehaviour
 
     private void UpdatePlayerSpeed()
     {
-        speedModifier = m_proceduralGeneratorRef.GetSpeedModifier();
-        speedVertical += Time.deltaTime * c_startingAccellerationVertical * speedModifier;
-        speedHorizontal += Time.deltaTime * c_startingAccellerationHorizontal * speedModifier;
+        m_speedModifier = m_proceduralGeneratorRef.GetSpeedModifier();
+        speedVertical += Time.deltaTime * c_startingAccellerationVertical * m_speedModifier;
+        speedHorizontal += Time.deltaTime * c_startingAccellerationHorizontal * m_speedModifier;
     }
 
     private void PlayerJump()
@@ -106,7 +108,10 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         ApplyDefaultGravity();
-        ApplyMovement();
+        //Setting up keyInputs, Ignoring vertical movement inputs
+        m_keyInput = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
+        //Apply user input horizontal movement, continous vertical movement and jump movement
+        m_rb.velocity = new Vector3(speedHorizontal * m_keyInput.x, rbVelocityY, speedVertical);
     }
 
     /// <summary>
@@ -119,28 +124,18 @@ public class PlayerController : MonoBehaviour
         rbVelocityY = m_rb.velocity.y;
     }
 
-    private void ApplyMovement()
-    {
-        //Setting up keyInputs, Ignoring vertical movement inputs
-        Vector3 keyInput = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
-
-        //Apply user input horizontal movement, continous vertical movement and jump movement
-        m_rb.velocity = new Vector3(speedHorizontal * keyInput.x, m_rb.velocity.y, speedVertical);
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground")) 
         {
             isGrounded = true;
-        }
-        else if (collision.gameObject.CompareTag("WallLeft"))
+        }else if(collision.gameObject.CompareTag("WallLeft"))
         {
-
+            rbVelocityY = 0f;
         }
         else if (collision.gameObject.CompareTag("WallRight"))
         {
-
+            rbVelocityY = 0f;
         }
         else if (collision.gameObject.CompareTag("Obstacle"))
         {
