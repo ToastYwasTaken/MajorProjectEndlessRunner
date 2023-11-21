@@ -20,10 +20,8 @@ using UnityEngine;
  *  18.08.2023   FM  created
  *  14.09.2023   FM  removed unnecessary parts
  *  06.10.2023   FM  added horizontal continous movement, adjusted values, added seperated acceleration and speed variables
- *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug where Rigidbody speed was accidentally overwritten
- *  
- *  TODO: 
- *      - Scale accelleration accordingly
+ *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug                   where Rigidbody speed was accidentally overwritten
+ *  21.11.2023   FM  added null check
  *  
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
@@ -58,6 +56,13 @@ public class PlayerController : MonoBehaviour
     private float m_speedModifier;
     private Vector3 m_keyInput;
 
+    private void Awake()
+    {
+        if (proceduralGeneratorGO == null)
+        {
+            proceduralGeneratorGO = GameObject.FindAnyObjectByType<ProceduralGeneration>().gameObject;
+        }
+    }
     void Start()
     {
         m_rb = transform.GetComponent<Rigidbody>();

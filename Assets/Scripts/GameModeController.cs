@@ -18,10 +18,12 @@ using UnityEngine;
  * ----------------------------
  *  15.11.2023   FM  created
  *  20.11.2023   FM  added UpdateGameMode() to switch GameMode according to playerspeed hitting certain thresholds
+ *  21.11.2023   FM  added getter, added EventHandler to notify ProceduralGeneration whenever the GameMode changes
  *  
  *****************************************************************************/
 public enum GameModes
 {
+    GAMEOVER = -1,
     START = 0,
     VERY_EASY = 1,
     EASY = 2,
@@ -51,10 +53,19 @@ public class GameModeController : MonoBehaviour
     private PlayerController m_playerController;
     private float m_playerSpeed;
 
+    public delegate void GameModeAction();
+    public static event GameModeAction OnGameModeUpdated;
+
+    private void Awake()
+    {
+        if (m_playerController == null)
+        {
+        m_playerController = playerGO.GetComponent<PlayerController>();
+        }
+    }
     private void Start()
     {
         m_currentGameMode = GameModes.START;
-        m_playerController = playerGO.GetComponent<PlayerController>();
     }
     private void Update()
     {
@@ -67,27 +78,39 @@ public class GameModeController : MonoBehaviour
         if(m_playerSpeed < speedThresholdEasy)
         {
             m_currentGameMode = GameModes.VERY_EASY;
-        }else if (m_playerSpeed < speedThresholdMedium)
+            OnGameModeUpdated();
+        }
+        else if (m_playerSpeed < speedThresholdMedium)
         {
             m_currentGameMode = GameModes.EASY;
-        }else if (m_playerSpeed < speedThresholdHard)
+            OnGameModeUpdated();
+        }
+        else if (m_playerSpeed < speedThresholdHard)
         {
             m_currentGameMode= GameModes.MEDIUM;
+            OnGameModeUpdated();
         }
         else if (m_playerSpeed < speedThresholdVeryHard)
         {
             m_currentGameMode = GameModes.HARD;
+            OnGameModeUpdated();
         }
         else if (m_playerSpeed < speedThresholdExtreme)
         {
             m_currentGameMode = GameModes.VERY_HARD;
+            OnGameModeUpdated();
         }
         else 
         {
             m_currentGameMode = GameModes.EXTREME;
+            OnGameModeUpdated();
         }
     }
 
+    public GameModes GetCurrentGameMode()
+    {
+        return m_currentGameMode;
+    }
 
 }
 	
