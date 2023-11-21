@@ -28,6 +28,8 @@ using UnityEditor;
 *  21.11.2023   FM  added null check, added UpdatePrefabsOnGameStateChange(), added SpawnRandomObstacles(), added subscribing to event
 *                   
 *  TODO:            still have to fix the scripts to work as intended
+*                   Add randomization for ground size
+*                   make c_ not c_
 *  
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
@@ -57,13 +59,13 @@ public class ProceduralGeneration : MonoBehaviour
     private float m_spawnPositionOffsetZ = 0f;
     private float m_groundSizeIncrease = 5f;
     private Vector3 m_wallScale;    //stores wallScale values
-    private const float c_originalWallScaleX = 1f;
-    private const float c_originalWallScaleY = 1f;
-    private const float c_originalWallScaleZ = 30f;
+    private float c_originalWallScaleX = 1f;
+    private float c_originalWallScaleY = 1f;
+    private float c_originalWallScaleZ = 30f;
     private Vector3 m_groundScale;  //stores groundScale values
-    private const float c_originalGroundScaleX = 10f;
-    private const float c_originalGroundScaleY = 1f;
-    private const float c_originalGroundScaleZ = 30f;
+    private float c_originalGroundScaleX = 10f;
+    private float c_originalGroundScaleY = 1f;
+    private float c_originalGroundScaleZ = 30f;
 
     //Obstacle variables
     [SerializeField, Range(0.1f,1f)]
