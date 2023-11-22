@@ -19,7 +19,10 @@ using UnityEngine;
  *  15.11.2023   FM  created
  *  20.11.2023   FM  added UpdateGameMode() to switch GameMode according to playerspeed hitting certain thresholds
  *  21.11.2023   FM  added getter, added EventHandler to notify ProceduralGeneration whenever the GameMode changes
+ *  22.11.2023   FM  added proper threshold capture to switch game modes and trigger OnGameModeUpdated() as intended
  *  
+ *  Buglist:
+ *      - playerspeed is not updated as intended
  *****************************************************************************/
 public enum GameModes
 {
@@ -39,6 +42,8 @@ public class GameModeController : MonoBehaviour
     private GameObject playerGO;
     //Threshold describing the speed needed to switch to higher difficulty
     [SerializeField]
+    private float speedThresholdVeryEasy;
+    [SerializeField]
     private float speedThresholdEasy;
     [SerializeField]
     private float speedThresholdMedium;
@@ -50,6 +55,7 @@ public class GameModeController : MonoBehaviour
     private float speedThresholdExtreme;
 
     private GameModes m_currentGameMode;
+    private GameModes m_nextGameMode;
     private PlayerController m_playerController;
     private float m_playerSpeed;
 
@@ -66,44 +72,47 @@ public class GameModeController : MonoBehaviour
     private void Start()
     {
         m_currentGameMode = GameModes.START;
+        m_nextGameMode = GameModes.VERY_EASY;
     }
     private void Update()
     {
+        m_playerSpeed = m_playerController.GetVerticalSpeed();
         UpdateGameMode();
+        if (m_nextGameMode == m_currentGameMode)
+        {
+        OnGameModeUpdated();
+        }
     }
 
     private void UpdateGameMode()
     {
-        m_playerSpeed = m_playerController.GetVerticalSpeed();
-        if(m_playerSpeed < speedThresholdEasy)
+        //rounded value needed to avoid skipping hitting a threshold
+        double playerSpeedRounded = Math.Round(m_playerSpeed, 2);
+        Debug.Log(m_playerSpeed + " " + playerSpeedRounded + "   " + speedThresholdVeryEasy);
+        if (playerSpeedRounded == speedThresholdVeryEasy)
         {
             m_currentGameMode = GameModes.VERY_EASY;
-            OnGameModeUpdated();
+            Debug.Log("Hit very easy speed threshold");
         }
-        else if (m_playerSpeed < speedThresholdMedium)
+        else if (playerSpeedRounded == speedThresholdEasy)
         {
             m_currentGameMode = GameModes.EASY;
-            OnGameModeUpdated();
         }
-        else if (m_playerSpeed < speedThresholdHard)
+        else if (playerSpeedRounded == speedThresholdMedium)
         {
-            m_currentGameMode= GameModes.MEDIUM;
-            OnGameModeUpdated();
+            m_currentGameMode = GameModes.MEDIUM;
         }
-        else if (m_playerSpeed < speedThresholdVeryHard)
+        else if (playerSpeedRounded == speedThresholdHard)
         {
             m_currentGameMode = GameModes.HARD;
-            OnGameModeUpdated();
         }
-        else if (m_playerSpeed < speedThresholdExtreme)
+        else if (playerSpeedRounded == speedThresholdVeryHard)
         {
             m_currentGameMode = GameModes.VERY_HARD;
-            OnGameModeUpdated();
         }
-        else 
+        else if(playerSpeedRounded == speedThresholdExtreme)
         {
             m_currentGameMode = GameModes.EXTREME;
-            OnGameModeUpdated();
         }
     }
 

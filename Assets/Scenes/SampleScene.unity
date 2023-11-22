@@ -237,79 +237,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!1001 &825163521
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 13.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -1.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6144254682577966252, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_Name
-      value: Cube
-      objectReference: {fileID: 0}
-    - target: {fileID: 6398213377321910131, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: a54b7ad866d3a9b47bbf3b53baa0acc4, type: 2}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
 --- !u!1 &1440765237
 GameObject:
   m_ObjectHideFlags: 0
@@ -387,7 +314,7 @@ Transform:
   m_GameObject: {fileID: 1708057356}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 100}
+  m_LocalPosition: {x: 0, y: 0, z: 400}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -510,11 +437,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerGO: {fileID: 1700030702546112322, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
-  speedThresholdEasy: 0
-  speedThresholdMedium: 0
-  speedThresholdHard: 0
-  speedThresholdVeryHard: 0
-  speedThresholdExtreme: 0
+  speedThresholdVeryEasy: 5.5
+  speedThresholdEasy: 6
+  speedThresholdMedium: 8
+  speedThresholdHard: 11
+  speedThresholdVeryHard: 14
+  speedThresholdExtreme: 18
 --- !u!4 &1881202768 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4633430967283130936, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
@@ -980,4 +908,3 @@ SceneRoots:
   - {fileID: 6422723882586637975}
   - {fileID: 1440765238}
   - {fileID: 1767342339}
-  - {fileID: 825163521}

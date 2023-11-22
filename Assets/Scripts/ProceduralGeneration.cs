@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEditor.EditorTools;
 using UnityEditor;
+using Unity.VisualScripting.Antlr3.Runtime;
 /******************************************************************************
 * Project: MajorProjectEndlessRunner
 * File: ProceduralGeneration.cs
@@ -26,28 +27,37 @@ using UnityEditor;
 *                   end of the last one and increases it's size
 *  20.11.2023   FM  added scaling for invisible walls, fixed render distance
 *  21.11.2023   FM  added null check, added UpdatePrefabsOnGameStateChange(), added SpawnRandomObstacles(), added subscribing to event
+<<<<<<< Updated upstream
 *                   
 *  TODO:            still have to fix the scripts to work as intended
 *                   Add randomization for ground size
 *                   make c_ not c_
+=======
+*  22.11.2023   FM  renamed UpdatePrefabsOnGameStateChange() to UpdateTemplates(), added color determination and assignment in UpdateTemplates()
+*                  
+*  TODO:
+*       - Implement randomized factor for spawning templates
+>>>>>>> Stashed changes
 *  
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
 {
-    //GameMode variables
+    #region GameController Variables
     [SerializeField]
     private GameObject gameModeControllerGO;
     private GameModeController m_gameModeControllerRef;
     private GameModes m_currentGameMode;
-    private bool m_gameModeChanged = false;
+    #endregion
 
-    //Player related variables
+    #region Player Variables
     [SerializeField]
     private GameObject playerGO;
     private float m_playerPositionZ;
     private float m_speedModifier = 1f;
+    private float m_spawnPositionOffsetZ = 0f;
+    #endregion
 
-    //Template variables
+    #region Template Variables
     [SerializeField]
     private GameObject templatePrefabGO;
     [SerializeField, Range(50f, 2000f)]
@@ -56,6 +66,7 @@ public class ProceduralGeneration : MonoBehaviour
     private int m_templateCounter = 0;
     private Vector3 m_templateSpawnPosition;
     private Quaternion m_templateSpawnRotation;
+<<<<<<< Updated upstream
     private float m_spawnPositionOffsetZ = 0f;
     private float m_groundSizeIncrease = 5f;
     private Vector3 m_wallScale;    //stores wallScale values
@@ -66,8 +77,24 @@ public class ProceduralGeneration : MonoBehaviour
     private float c_originalGroundScaleX = 10f;
     private float c_originalGroundScaleY = 1f;
     private float c_originalGroundScaleZ = 30f;
+=======
+    //Wall Variables
+    private Vector3 m_wallScale;    
+    private const float c_originalWallScaleX = 1f;
+    private const float c_originalWallScaleY = 1f;
+    private const float c_originalWallScaleZ = 30f;
+    private Color32 m_wallColor;
+    //Ground Variables
+    private Vector3 m_groundScale;  
+    private const float c_originalGroundScaleX = 10f;
+    private const float c_originalGroundScaleY = 1f;
+    private const float c_originalGroundScaleZ = 30f;
+    private float m_groundSizeIncrease = 5f;
+    private Color32 m_groundColor;
+    #endregion
+>>>>>>> Stashed changes
 
-    //Obstacle variables
+    #region Obstacle Variables
     [SerializeField, Range(0.1f,1f)]
     private float obstacleDensity;
     private GameObject[] m_obstaclePrefabsGOArr;
@@ -75,7 +102,8 @@ public class ProceduralGeneration : MonoBehaviour
     private Vector3 m_obstacleSpawnPosMax;
     private float m_obstacleX;
     private float m_obstacleZ;
-
+    private Color32 m_obstacleColor;
+    #endregion
 
     private void Awake()
     {
@@ -91,6 +119,7 @@ public class ProceduralGeneration : MonoBehaviour
         }
         //Load all available obstacles from resources
         m_obstaclePrefabsGOArr = Resources.LoadAll<GameObject>("OBSTACLES");
+        m_obstacleColor = new Color(0, 0, 0, 255);
     }
     private void Start()
     {
@@ -103,9 +132,9 @@ public class ProceduralGeneration : MonoBehaviour
         //Update player pos
         m_playerPositionZ = playerGO.transform.position.z;
         //Check if game mode updated
-        GameModeController.OnGameModeUpdated += UpdatePrefabsOnGameStateChange;
+        GameModeController.OnGameModeUpdated += UpdateTemplates;
+        GameModeController.OnGameModeUpdated -= UpdateTemplates;
         //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + "playerposZ: " + m_playerPositionZ + "render dis: " + renderDistance);
-        UpdatePrefabsOnGameStateChange();
         //Generate new Templates when template pos - player position reaches render distance
         if (m_templateSpawnPosition.z - m_playerPositionZ < renderDistance)
         {
@@ -120,33 +149,40 @@ public class ProceduralGeneration : MonoBehaviour
     /// <summary>
     /// Change colors of prefab on difficulty change
     /// </summary>
-    private void UpdatePrefabsOnGameStateChange()
+    private void UpdateTemplates()
     {
-        Debug.Log("In UpdatePrefabsOnGameStateChanged()");
-        if (m_currentGameMode == GameModes.VERY_EASY)
+        Debug.Log("In UpdateTemplates()");
+        //Set colors according to game mode
+        //They stay the same for START and VERY_EASY
+        if (m_currentGameMode == GameModes.EASY)
         {
-            
-        }
-        else if (m_currentGameMode == GameModes.EASY)
-        {
-
-
+            m_groundColor = new Color32(0, 255, 250, 255);
+            m_wallColor = new Color32(10, 125, 120, 255);
         }
         else if (m_currentGameMode == GameModes.MEDIUM)
         {
-
+            m_groundColor = new Color32(10, 25, 240, 255);
+            m_wallColor = new Color32(10, 15, 105, 255);
         }
         else if (m_currentGameMode == GameModes.HARD)
         {
-
-        }else if(m_currentGameMode == GameModes.VERY_HARD)
-        {
-
-        }else if(m_currentGameMode == GameModes.EXTREME)
-        {
-
+            m_groundColor = new Color32(255, 155, 0, 255);
+            m_wallColor = new Color32(155, 95, 10, 255);
         }
-        m_gameModeChanged = false;
+        else if(m_currentGameMode == GameModes.VERY_HARD)
+        {
+            m_groundColor = new Color32(255, 0, 0, 255);
+            m_wallColor = new Color32(115, 5, 5, 255);
+        }
+        else if(m_currentGameMode == GameModes.EXTREME)
+        {
+            m_groundColor = new Color32(255, 0, 255, 255);
+            m_wallColor = new Color32(150, 15, 150, 255);
+        }
+        //Update Colors
+        templatePrefabGO.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Renderer>().material.color = m_groundColor;
+        templatePrefabGO.transform.GetChild(1).GetChild(0).gameObject.GetComponent<Renderer>().material.color = m_wallColor;
+        templatePrefabGO.transform.GetChild(1).GetChild(2).gameObject.GetComponent<Renderer>().material.color = m_wallColor;
     }
 
     /// <summary>
@@ -160,7 +196,6 @@ public class ProceduralGeneration : MonoBehaviour
         m_templateSpawnPosition = playerGO.transform.position + new Vector3(0, -1.5f, m_spawnPositionOffsetZ);  //-1.5f is the height of player spawn offset
         m_templateSpawnRotation = Quaternion.identity;
     }
-
 
     /// <summary>
     /// Updating m_groundScale.z, m_wallScale.z and calculating m_templateSpawnPosition 
@@ -225,11 +260,10 @@ public class ProceduralGeneration : MonoBehaviour
             m_obstacleSpawnPosMin = new Vector3(0,0,m_templateSpawnPosition.z);
             m_obstacleSpawnPosMax = new Vector3();
             //Randomize spawn positions, trying not to overlap
+
+            //Assign color
+            m_obstaclePrefabsGOArr[i].GetComponent<Renderer>().material.color = m_obstacleColor;
         }
-    }
-    private void OnDisable()
-    {
-        GameModeController.OnGameModeUpdated -= UpdatePrefabsOnGameStateChange;
     }
 
     /// <summary>
@@ -240,7 +274,6 @@ public class ProceduralGeneration : MonoBehaviour
     {
         m_speedModifier -= 0.05f;
     }
-
     public float GetSpeedModifier()
     {
         return m_speedModifier;

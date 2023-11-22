@@ -25,7 +25,8 @@ using UnityEngine;
  *  
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
- *  
+ *  TODO: 
+ *      - Update colliders
  *****************************************************************************/
 public class PlayerController : MonoBehaviour
 {
