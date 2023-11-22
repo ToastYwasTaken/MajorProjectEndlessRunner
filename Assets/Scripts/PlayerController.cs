@@ -22,6 +22,7 @@ using UnityEngine;
  *  06.10.2023   FM  added horizontal continous movement, adjusted values, added seperated acceleration and speed variables
  *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug                   where Rigidbody speed was accidentally overwritten
  *  21.11.2023   FM  added null check
+ *  22.11.2023   FM  added getter
  *  
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
@@ -48,8 +49,8 @@ public class PlayerController : MonoBehaviour
     private const float c_rbMass = 1f;
     private const float c_fallSpeedMultiplier = 2.8f;
     private const float c_gravityConstant = -9.81f;
-    private const float gravityScale = 1.5f;    //scale factor for the gravity
-    private float c_startingAccellerationHorizontal;  //accelleration moving left and right
+    private const float c_gravityScale = 1.5f;    //scale factor for the gravity
+    private float m_startingAccellerationHorizontal;  //accelleration moving left and right
     private static Vector3 s_spawnPosition = new Vector3(0, 1.5f, 0);
     private static Quaternion s_spawnRotation = new Quaternion(0, 0, 0, 0);
     private Rigidbody m_rb;
@@ -70,7 +71,7 @@ public class PlayerController : MonoBehaviour
         m_rb.mass = c_rbMass;
         m_proceduralGeneratorRef = proceduralGeneratorGO.GetComponent<ProceduralGeneration>();
 
-        c_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
+        m_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
         //Spawn player
         transform.position = s_spawnPosition;
         transform.rotation = s_spawnRotation;
@@ -87,7 +88,7 @@ public class PlayerController : MonoBehaviour
     {
         m_speedModifier = m_proceduralGeneratorRef.GetSpeedModifier();
         speedVertical += Time.deltaTime * c_startingAccellerationVertical * m_speedModifier;
-        speedHorizontal += Time.deltaTime * c_startingAccellerationHorizontal * m_speedModifier;
+        speedHorizontal += Time.deltaTime * m_startingAccellerationHorizontal * m_speedModifier;
     }
 
     private void PlayerJump()
@@ -125,7 +126,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void ApplyDefaultGravity()
     {
-        scaledGravityVector = c_gravityConstant * gravityScale * Vector3.up;
+        scaledGravityVector = c_gravityConstant * c_gravityScale * Vector3.up;
         m_rb.AddForce(scaledGravityVector, ForceMode.Acceleration);
         rbVelocityY = m_rb.velocity.y;
     }
@@ -153,7 +154,9 @@ public class PlayerController : MonoBehaviour
     {
         return speedVertical;
     }
-
-
+    public float GetPlayerPositionZ()
+    {
+        return this.transform.position.z;
+    }
 }
 

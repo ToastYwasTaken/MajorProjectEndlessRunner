@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.RestService;
 using UnityEngine;
 /******************************************************************************
  * Project: MajorProjectEndlessRunner
@@ -66,7 +67,7 @@ public class GameModeController : MonoBehaviour
     {
         if (m_playerController == null)
         {
-        m_playerController = playerGO.GetComponent<PlayerController>();
+            m_playerController = playerGO.GetComponent<PlayerController>();
         }
     }
     private void Start()

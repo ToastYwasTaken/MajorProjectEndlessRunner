@@ -27,17 +27,11 @@ using Unity.VisualScripting.Antlr3.Runtime;
 *                   end of the last one and increases it's size
 *  20.11.2023   FM  added scaling for invisible walls, fixed render distance
 *  21.11.2023   FM  added null check, added UpdatePrefabsOnGameStateChange(), added SpawnRandomObstacles(), added subscribing to event
-<<<<<<< Updated upstream
-*                   
-*  TODO:            still have to fix the scripts to work as intended
-*                   Add randomization for ground size
-*                   make c_ not c_
-=======
-*  22.11.2023   FM  renamed UpdatePrefabsOnGameStateChange() to UpdateTemplates(), added color determination and assignment in UpdateTemplates()
+*  22.11.2023   FM  renamed UpdatePrefabsOnGameStateChange() to UpdateTemplates(), added color determination and assignment in UpdateTemplates(),
+*                   resolved merge conflict, implemented randomized factor for spawning templates
 *                  
 *  TODO:
-*       - Implement randomized factor for spawning templates
->>>>>>> Stashed changes
+*       - resolve accessing variables from other GO not working
 *  
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
@@ -52,6 +46,7 @@ public class ProceduralGeneration : MonoBehaviour
     #region Player Variables
     [SerializeField]
     private GameObject playerGO;
+    private PlayerController m_playerControllerRef;
     private float m_playerPositionZ;
     private float m_speedModifier = 1f;
     private float m_spawnPositionOffsetZ = 0f;
@@ -66,18 +61,7 @@ public class ProceduralGeneration : MonoBehaviour
     private int m_templateCounter = 0;
     private Vector3 m_templateSpawnPosition;
     private Quaternion m_templateSpawnRotation;
-<<<<<<< Updated upstream
-    private float m_spawnPositionOffsetZ = 0f;
-    private float m_groundSizeIncrease = 5f;
-    private Vector3 m_wallScale;    //stores wallScale values
-    private float c_originalWallScaleX = 1f;
-    private float c_originalWallScaleY = 1f;
-    private float c_originalWallScaleZ = 30f;
-    private Vector3 m_groundScale;  //stores groundScale values
-    private float c_originalGroundScaleX = 10f;
-    private float c_originalGroundScaleY = 1f;
-    private float c_originalGroundScaleZ = 30f;
-=======
+
     //Wall Variables
     private Vector3 m_wallScale;    
     private const float c_originalWallScaleX = 1f;
@@ -92,7 +76,6 @@ public class ProceduralGeneration : MonoBehaviour
     private float m_groundSizeIncrease = 5f;
     private Color32 m_groundColor;
     #endregion
->>>>>>> Stashed changes
 
     #region Obstacle Variables
     [SerializeField, Range(0.1f,1f)]
@@ -107,17 +90,19 @@ public class ProceduralGeneration : MonoBehaviour
 
     private void Awake()
     {
+        //Null checks and assigning necessary references
         if (playerGO == null)
         {
-            playerGO = GameObject.FindAnyObjectByType<PlayerController>().gameObject;
+            playerGO = GameObject.FindObjectOfType<PlayerController>().gameObject;
         }
-        if(gameModeControllerGO == null)
+        if (gameModeControllerGO == null)
         {
             gameModeControllerGO = GameObject.FindObjectOfType<GameModeController>().gameObject;
-            m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>();
-            m_currentGameMode = m_gameModeControllerRef.GetCurrentGameMode();
         }
-        //Load all available obstacles from resources
+        m_playerControllerRef = playerGO.GetComponent<PlayerController>();
+        m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>();
+        m_currentGameMode = m_gameModeControllerRef.GetCurrentGameMode();
+        //Load all available obstacles from resources and assign default obstacle color
         m_obstaclePrefabsGOArr = Resources.LoadAll<GameObject>("OBSTACLES");
         m_obstacleColor = new Color(0, 0, 0, 255);
     }
@@ -129,14 +114,16 @@ public class ProceduralGeneration : MonoBehaviour
 
     private void Update()
     {
-        //Update player pos
-        m_playerPositionZ = playerGO.transform.position.z;
+        //Get current player pos
+        m_playerPositionZ = m_playerControllerRef.GetPlayerPositionZ();
+        //Update renderdistance relative to player position;
+        renderDistance += m_playerPositionZ;
         //Check if game mode updated
         GameModeController.OnGameModeUpdated += UpdateTemplates;
         GameModeController.OnGameModeUpdated -= UpdateTemplates;
-        //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + "playerposZ: " + m_playerPositionZ + "render dis: " + renderDistance);
+        Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + "playerposZ: " + m_playerPositionZ + "render dis: " + renderDistance);
         //Generate new Templates when template pos - player position reaches render distance
-        if (m_templateSpawnPosition.z - m_playerPositionZ < renderDistance)
+        if (m_templateSpawnPosition.z + m_playerPositionZ < renderDistance)
         {
             CalculateNextTemplateValues();
             //Spawn next template
@@ -179,7 +166,7 @@ public class ProceduralGeneration : MonoBehaviour
             m_groundColor = new Color32(255, 0, 255, 255);
             m_wallColor = new Color32(150, 15, 150, 255);
         }
-        //Update Colors
+        //Update colors in prefab
         templatePrefabGO.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Renderer>().material.color = m_groundColor;
         templatePrefabGO.transform.GetChild(1).GetChild(0).gameObject.GetComponent<Renderer>().material.color = m_wallColor;
         templatePrefabGO.transform.GetChild(1).GetChild(2).gameObject.GetComponent<Renderer>().material.color = m_wallColor;
@@ -187,6 +174,7 @@ public class ProceduralGeneration : MonoBehaviour
 
     /// <summary>
     /// Setting up the starting template and instantiating it
+    /// This will not be randomized and always look like the input prefab with adjusted spawn position
     /// </summary>
     private void SetUpInitialTemplate()
     {
@@ -209,8 +197,9 @@ public class ProceduralGeneration : MonoBehaviour
         //Update templateSpawnPos according to the size increase of the next spawned platform
         float templateSpawnPosZ = m_templateList[m_templateCounter].transform.GetChild(0).GetChild(0).localScale.z ;
         m_templateSpawnPosition += new Vector3 (0,0,templateSpawnPosZ + (m_groundSizeIncrease/2));
-        //Increasing the increase for future spawns to counter shorter sections in higher speeds
-        m_groundSizeIncrease += 2;
+        //Increasing the increase for future spawns to counter shorter sections in higher speeds, randomize the increment
+        System.Random rdm = new System.Random();
+        m_groundSizeIncrease = rdm.Next(1,4);
         m_templateCounter++;
     }
 
@@ -227,13 +216,13 @@ public class ProceduralGeneration : MonoBehaviour
     {
         GameObject template = Instantiate(_templateToSpawn, _templateSpawnPosition, _templateSpawnRotation);
         //Update the prefabs scales
-        //Update ground scale and wall scale
+        //ground scale
         template.transform.GetChild(0).GetChild(0).localScale = _groundScaleVector;
         //right lower wall
         template.transform.GetChild(1).GetChild(0).localScale = _wallScaleVector;
         //left lower wall
         template.transform.GetChild(1).GetChild(2).localScale = _wallScaleVector;
-        //Update wallScaleVector for upper walls
+        //Update wallScaleVector for upper walls to make them higher
         _wallScaleVector = new Vector3(_wallScaleVector.x, 7f, _wallScaleVector.z);
         //right upper wall
         template.transform.GetChild(1).GetChild(1).localScale = _wallScaleVector;
@@ -243,7 +232,7 @@ public class ProceduralGeneration : MonoBehaviour
         m_templateList.Add(template);
         //Updating player speed to increase at an reduced rate
         UpdatePlayerSpeedModifier();
-        Debug.Log("Spawned Template nr."+ m_templateList.Count +" at: " + _templateSpawnPosition);
+        Debug.Log("Spawned Template nr."+ m_templateList.Count +" at: " + _templateSpawnPosition + " with size: " + _groundScaleVector.z);
     }
 
     private void SpawnRandomObstacles()
