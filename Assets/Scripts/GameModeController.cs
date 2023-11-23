@@ -57,18 +57,26 @@ public class GameModeController : MonoBehaviour
 
     private GameModes m_currentGameMode;
     private GameModes m_nextGameMode;
-    private PlayerController m_playerController;
+    private PlayerController m_playerControllerRef;
     private float m_playerSpeed;
 
     public delegate void GameModeAction();
     public static event GameModeAction OnGameModeUpdated;
 
+    public static GameModeController m_instance { get; private set; }
+
     private void Awake()
     {
-        if (m_playerController == null)
+        //Singleton checks
+        if (m_instance == null && m_instance != this)
         {
-            m_playerController = playerGO.GetComponent<PlayerController>();
+            Destroy(m_instance);
         }
+        else
+        {
+            m_instance = this;
+        }
+        m_playerControllerRef = playerGO.GetComponent<PlayerController>();
     }
     private void Start()
     {
@@ -77,7 +85,7 @@ public class GameModeController : MonoBehaviour
     }
     private void Update()
     {
-        m_playerSpeed = m_playerController.GetVerticalSpeed();
+        m_playerSpeed = m_playerControllerRef.GetVerticalSpeed();
         UpdateGameMode();
         if (m_nextGameMode == m_currentGameMode)
         {

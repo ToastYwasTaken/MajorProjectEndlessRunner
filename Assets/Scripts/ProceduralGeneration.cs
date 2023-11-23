@@ -88,8 +88,20 @@ public class ProceduralGeneration : MonoBehaviour
     private Color32 m_obstacleColor;
     #endregion
 
+    //Other
+    public static ProceduralGeneration m_instance { get; private set; }
+
     private void Awake()
     {
+        //Singleton checks
+        if (m_instance == null && m_instance != this)
+        {
+            Destroy(m_instance);
+        }
+        else
+        {
+            m_instance = this;
+        }
         //Null checks and assigning necessary references
         if (playerGO == null)
         {
