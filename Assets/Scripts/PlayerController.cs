@@ -23,26 +23,31 @@ using UnityEngine;
  *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug                   where Rigidbody speed was accidentally overwritten
  *  21.11.2023   FM  added null check
  *  22.11.2023   FM  added getter
+ *  24.11.2023   FM  removed reference to ProceduralGeneration as of now; added tooltips
  *  
- *  Buglist:
- *      - Player sticking to the wall when holding left or right respectively
  *  TODO: 
  *      - Update colliders
+ *      
+ *  Buglist:
+ *      - Player sticking to the wall when holding left or right respectively
+ *  
  *****************************************************************************/
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject proceduralGeneratorGO;
-    [SerializeField]
-    private float speedVertical = 5f; //initial speed moving forward
-    [SerializeField]
-    private float speedHorizontal = 5f; //initial speed moving left and right
-    [SerializeField, ReadOnly]
-    private float rbVelocityY;  //velocity of rb, applied by gravity, jumping and falling / only for debugging purposes displayed
-    [SerializeField, ReadOnly]
+    //[SerializeField]
+    //private GameObject proceduralGeneratorGO;
+    [SerializeField, Tooltip("Speed moving forward")]
+    private float speedVertical = 5f; 
+    [SerializeField, Tooltip("Speed moving left and right, depending on player input")]
+    private float speedHorizontal = 5f; 
+    [SerializeField, Range(0.5f, 1.2f), Tooltip("Modifies accelleration of speed")]
+    private float speedModifier = 0.9f;
+    [SerializeField, ReadOnly, Tooltip("Jump / falling velocity applied to the rb")]
+    private float rbVelocityY; 
+    [SerializeField, ReadOnly, Tooltip("Bool for jumping behavior")]
     private bool isGrounded;   
-    [SerializeField, ReadOnly]
-    private Vector3 scaledGravityVector; //gravity applied to the player
+    [SerializeField, ReadOnly, Tooltip("Scales gravity to accellerate player fall speed")]
+    private Vector3 scaledGravityVector; 
 
     private const float c_jumpForce = 10f;    //jump force multiplier
     private const float c_startingAccellerationVertical = 0.05f; //accelleration moving forward
@@ -54,22 +59,21 @@ public class PlayerController : MonoBehaviour
     private static Vector3 s_spawnPosition = new Vector3(0, 1.5f, 0);
     private static Quaternion s_spawnRotation = new Quaternion(0, 0, 0, 0);
     private Rigidbody m_rb;
-    private ProceduralGeneration m_proceduralGeneratorRef;
-    private float m_speedModifier;
+    //private ProceduralGeneration m_proceduralGeneratorRef;
     private Vector3 m_keyInput;
 
     private void Awake()
     {
-        if (proceduralGeneratorGO == null)
-        {
-            proceduralGeneratorGO = GameObject.FindAnyObjectByType<ProceduralGeneration>().gameObject;
-        }
+        //if (proceduralGeneratorGO == null)
+        //{
+        //    proceduralGeneratorGO = GameObject.FindAnyObjectByType<ProceduralGeneration>().gameObject;
+        //}
     }
     void Start()
     {
         m_rb = transform.GetComponent<Rigidbody>();
         m_rb.mass = c_rbMass;
-        m_proceduralGeneratorRef = proceduralGeneratorGO.GetComponent<ProceduralGeneration>();
+        //m_proceduralGeneratorRef = proceduralGeneratorGO.GetComponent<ProceduralGeneration>();
 
         m_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
         //Spawn player
@@ -86,9 +90,9 @@ public class PlayerController : MonoBehaviour
 
     private void UpdatePlayerSpeed()
     {
-        m_speedModifier = m_proceduralGeneratorRef.GetSpeedModifier();
-        speedVertical += Time.deltaTime * c_startingAccellerationVertical * m_speedModifier;
-        speedHorizontal += Time.deltaTime * m_startingAccellerationHorizontal * m_speedModifier;
+        speedModifier = 0.9f;
+        speedVertical += Time.deltaTime * c_startingAccellerationVertical * speedModifier;
+        speedHorizontal += Time.deltaTime * m_startingAccellerationHorizontal * speedModifier;
     }
 
     private void PlayerJump()

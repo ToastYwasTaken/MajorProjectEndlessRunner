@@ -143,6 +143,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5170631371704290942, guid: 029c4ec135ac47544b6ed7e58570a81a, type: 3}
   m_PrefabInstance: {fileID: 5057741102716489575}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &540864214 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1700030702546112322, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
+  m_PrefabInstance: {fileID: 1917904640923825128}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -282,7 +287,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameModeControllerGO: {fileID: 1767342338}
-  playerGO: {fileID: 1700030702546112322, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
+  playerGO: {fileID: 540864214}
   templatePrefabGO: {fileID: 7609648216692623370, guid: 91de4fef8bd9c414c8fbf700cdd013d3, type: 3}
   renderDistance: 400
   obstacleDensity: 0
@@ -436,7 +441,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5616d585b7cc3a144aa37e1e3aeed29f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerGO: {fileID: 1700030702546112322, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
+  playerGO: {fileID: 540864214}
   speedThresholdVeryEasy: 5.5
   speedThresholdEasy: 6
   speedThresholdMedium: 8

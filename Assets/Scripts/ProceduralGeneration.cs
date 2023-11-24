@@ -29,34 +29,37 @@ using Unity.VisualScripting.Antlr3.Runtime;
 *  21.11.2023   FM  added null check, added UpdatePrefabsOnGameStateChange(), added SpawnRandomObstacles(), added subscribing to event
 *  22.11.2023   FM  renamed UpdatePrefabsOnGameStateChange() to UpdateTemplates(), added color determination and assignment in UpdateTemplates(),
 *                   resolved merge conflict, implemented randomized factor for spawning templates
-*                  
+*  24.11.2023   FM  resolved bug, which denied accessing updated variables from player since the prefab was referenced instead of the playerGO in scene.
+*                   removed speed modifier reference for PlayerController -> will be handled completely in player; added tooltips
+*                   
 *  TODO:
-*       - resolve accessing variables from other GO not working
+*       - 
+*  Buglist:
+*       - resolve accessing variables from other GO not working - resolved
 *  
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
 {
     #region GameController Variables
-    [SerializeField]
+    [SerializeField, Tooltip("GameModeController GameObject in game scene, gets assigned in Awake() if unassigned")]
     private GameObject gameModeControllerGO;
     private GameModeController m_gameModeControllerRef;
     private GameModes m_currentGameMode;
     #endregion
 
     #region Player Variables
-    [SerializeField]
-    private GameObject playerGO;
+    [SerializeField, Tooltip("Player GameObject in active game scene, gets assigned in Awake() if unassigned")]
+    private GameObject playerGO; //Assign player here | Note: DON'T assign the Prefab from Prefabs folder, instead use hierachy player; if no player is assigned, it is found in Awake();
     private PlayerController m_playerControllerRef;
     private float m_playerPositionZ;
-    private float m_speedModifier = 1f;
     private float m_spawnPositionOffsetZ = 0f;
     #endregion
 
     #region Template Variables
-    [SerializeField]
+    [SerializeField, Tooltip("Prefab of basic template to be instantiated")]
     private GameObject templatePrefabGO;
-    [SerializeField, Range(50f, 2000f)]
-    private float renderDistance;
+    [SerializeField, Range(50f, 2000f), Tooltip ("Distance restricting future prefabs being instantiated to avoid overload")]
+    private int renderDistance = 400;
     private List<GameObject> m_templateList = new List<GameObject>();
     private int m_templateCounter = 0;
     private Vector3 m_templateSpawnPosition;
@@ -128,14 +131,14 @@ public class ProceduralGeneration : MonoBehaviour
     {
         //Get current player pos
         m_playerPositionZ = m_playerControllerRef.GetPlayerPositionZ();
-        //Update renderdistance relative to player position;
-        renderDistance += m_playerPositionZ;
+        //Update renderdistance relative to player position
+        var render_distance_relative = m_playerPositionZ + renderDistance;
         //Check if game mode updated
         GameModeController.OnGameModeUpdated += UpdateTemplates;
         GameModeController.OnGameModeUpdated -= UpdateTemplates;
-        Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + "playerposZ: " + m_playerPositionZ + "render dis: " + renderDistance);
+        //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + "playerposZ: " + m_playerPositionZ + "render dis rel: " + render_distance_relative);
         //Generate new Templates when template pos - player position reaches render distance
-        if (m_templateSpawnPosition.z + m_playerPositionZ < renderDistance)
+        if (m_templateSpawnPosition.z < render_distance_relative)
         {
             CalculateNextTemplateValues();
             //Spawn next template
@@ -242,8 +245,6 @@ public class ProceduralGeneration : MonoBehaviour
         template.transform.GetChild(1).GetChild(3).localScale = _wallScaleVector;
         //Adding spawned template to list
         m_templateList.Add(template);
-        //Updating player speed to increase at an reduced rate
-        UpdatePlayerSpeedModifier();
         Debug.Log("Spawned Template nr."+ m_templateList.Count +" at: " + _templateSpawnPosition + " with size: " + _groundScaleVector.z);
     }
 
@@ -267,16 +268,5 @@ public class ProceduralGeneration : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// This updates the playerspeed to accellerate slower so the speed doesn't get too fast that quick
-    /// It's updated whenever new Templates are spawned
-    /// </summary>
-    private void UpdatePlayerSpeedModifier()
-    {
-        m_speedModifier -= 0.05f;
-    }
-    public float GetSpeedModifier()
-    {
-        return m_speedModifier;
-    }
+
 }
