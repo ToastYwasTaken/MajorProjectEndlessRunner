@@ -22,6 +22,7 @@ using UnityEngine;
  *  21.11.2023   FM  added getter, added EventHandler to notify ProceduralGeneration whenever the GameMode changes
  *  22.11.2023   FM  added proper threshold capture to switch game modes and trigger OnGameModeUpdated() as intended
  *  24.11.2023   FM  added tooltips; fixed playerspeed being update as intended; 
+ *  26.11.2023   FM  moved GameMode check
  *  
  *  TODO: 
  *      - correct playerspeed check for game mode change
@@ -33,7 +34,7 @@ using UnityEngine;
 public enum GameModes
 {
     GAMEOVER = -1,
-    START = 0,
+    START = 0,  //Switching from START to VERY_EASY does NOT change prefabs in ProceduralGeneration.cs
     VERY_EASY = 1,
     EASY = 2,
     MEDIUM = 3,
@@ -64,22 +65,20 @@ public class GameModeController : MonoBehaviour
     private GameModes m_nextGameMode;
     private PlayerController m_playerControllerRef;
     private float m_playerSpeed;
+    public bool GameModeChanged { get; set; }
 
-    public delegate void GameModeAction();
-    public static event GameModeAction OnGameModeUpdated;
-
-    public static GameModeController m_instance { get; private set; }
+    public static GameModeController Instance { get; private set; }
 
     private void Awake()
     {
         //Singleton checks
-        if (m_instance == null && m_instance != this)
+        if (Instance == null && Instance != this)
         {
-            Destroy(m_instance);
+            Destroy(Instance);
         }
         else
         {
-            m_instance = this;
+            Instance = this;
         }
         m_playerControllerRef = playerGO.GetComponent<PlayerController>();
     }
@@ -92,21 +91,21 @@ public class GameModeController : MonoBehaviour
     {
         m_playerSpeed = m_playerControllerRef.GetVerticalSpeed();
         UpdateGameMode();
+        //Update nextGameMode
         if (m_nextGameMode == m_currentGameMode)
         {
-            Debug.Log("Updating GameMode");
-            //trigger event to update future spawned templates
-            OnGameModeUpdated();
-            //increment gameMode
-            m_nextGameMode = m_currentGameMode++;
+            Debug.Log("next game mode = current game mode");
+            GameModeChanged = true;
+            m_nextGameMode++;
         }
+        Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
     }
 
     private void UpdateGameMode()
     {
         //rounded value needed to avoid skipping hitting a threshold
         double playerSpeedRounded = Math.Round(m_playerSpeed, 2);
-        //Debug.Log(m_playerSpeed + " " + playerSpeedRounded + "   " + speedThresholdVeryEasy);
+        //Debug.Log(playerSpeedRounded + "   " + speedThresholdVeryEasy);
         if (playerSpeedRounded == speedThresholdVeryEasy)
         {
             m_currentGameMode = GameModes.VERY_EASY;
@@ -115,6 +114,7 @@ public class GameModeController : MonoBehaviour
         else if (playerSpeedRounded == speedThresholdEasy)
         {
             m_currentGameMode = GameModes.EASY;
+            Debug.Log("Hit easy speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdMedium)
         {
@@ -132,6 +132,7 @@ public class GameModeController : MonoBehaviour
         {
             m_currentGameMode = GameModes.EXTREME;
         }
+
     }
 
     public GameModes GetCurrentGameMode()
