@@ -396,6 +396,10 @@ MonoBehaviour:
   templatePrefabGO: {fileID: 7609648216692623370, guid: 91de4fef8bd9c414c8fbf700cdd013d3, type: 3}
   renderDistance: 100
   obstacleDensity: 0.8
+  overlapBoxScale: {x: 2, y: 2, z: 2}
+  rayCastLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &1767342338
 GameObject:
   m_ObjectHideFlags: 0

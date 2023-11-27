@@ -24,6 +24,7 @@ using UnityEngine;
  *  21.11.2023   FM  added null check
  *  22.11.2023   FM  added getter
  *  24.11.2023   FM  removed reference to ProceduralGeneration as of now; added tooltips
+ *  27.11.2023   FM  minor changes
  *  
  *  TODO: 
  *      - Update colliders
@@ -56,8 +57,6 @@ public class PlayerController : MonoBehaviour
     private const float c_gravityConstant = -9.81f;
     private const float c_gravityScale = 1.5f;    //scale factor for the gravity
     private float m_startingAccellerationHorizontal;  //accelleration moving left and right
-    private static Vector3 s_spawnPosition = new Vector3(0, 1.5f, 0);
-    private static Quaternion s_spawnRotation = new Quaternion(0, 0, 0, 0);
     private Rigidbody m_rb;
     //private ProceduralGeneration m_proceduralGeneratorRef;
     private Vector3 m_keyInput;
@@ -76,9 +75,9 @@ public class PlayerController : MonoBehaviour
         //m_proceduralGeneratorRef = proceduralGeneratorGO.GetComponent<ProceduralGeneration>();
 
         m_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
-        //Spawn player
-        transform.position = s_spawnPosition;
-        transform.rotation = s_spawnRotation;
+        //Set player spawn values
+        transform.position = new Vector3(0,1.5f,0);
+        transform.rotation = Quaternion.identity;
     }
 
     void Update()
@@ -158,9 +157,9 @@ public class PlayerController : MonoBehaviour
     {
         return speedVertical;
     }
-    public float GetPlayerPositionZ()
+    public Vector3 GetPlayerPosition()
     {
-        return this.transform.position.z;
+        return this.transform.position;
     }
 }
 

@@ -1,12 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEditor.EditorTools;
-using UnityEditor;
-using Unity.VisualScripting.Antlr3.Runtime;
-using UnityEngine.Android;
 /******************************************************************************
 * Project: MajorProjectEndlessRunner
 * File: ProceduralGeneration.cs
@@ -33,9 +27,9 @@ using UnityEngine.Android;
 *  24.11.2023   FM  resolved bug, which denied accessing updated variables from player since the prefab was referenced instead of the playerGO in scene.
 *                   removed speed modifier reference for PlayerController -> will be handled completely in player; added tooltips
 *  26.11.2023   FM  fixed GameMode changing to work accordingly and adjust the colors of the spawned prefabs as wanted, added SpawnBehaviour for random Obstacles
+*  27.11.2023   FM  implemented obstacle spawning, tweaked constraints and restricted spawn overlaps by raycasting
 *  
 *  TODO:
-*       - implement obstacle spawning
 *       - tweak constraints for Obstacle Spawning
 *  Buglist:
 *       - resolve accessing variables from other GO not working - resolved
@@ -79,14 +73,20 @@ public class ProceduralGeneration : MonoBehaviour
     private const float c_originalGroundScaleX = 10f;
     private const float c_originalGroundScaleY = 1f;
     private const float c_originalGroundScaleZ = 30f;
+    private float m_distanceToGround = 1.5f;
     private float m_groundSizeIncrease = 5f;
     private Color32 m_groundColor;
     #endregion
 
     #region Obstacle Variables
-    [SerializeField, Range(0.1f,1f)]
+    [SerializeField, Range(0.1f,1f), Tooltip("Manually controlled density of random obstacles to spawn")]
     private float obstacleDensity;
+    [SerializeField, Tooltip("Size of box to check for colliders with raycast")]
+    private Vector3 overlapBoxScale;
+    [SerializeField, Tooltip("Layer of colliders to check for inside the overlap box")]
+    private LayerMask rayCastLayer;
     private GameObject[] m_obstaclePrefabsGOArr;
+    private List<GameObject> m_obstacleList = new List<GameObject>();
     private float m_obstacleSpawnPosXMin;
     private float m_obstacleSpawnPosXMax;
     private float m_obstacleSpawnPosZMin;
@@ -98,6 +98,7 @@ public class ProceduralGeneration : MonoBehaviour
 
     //Other
     public static ProceduralGeneration m_instance { get; private set; }
+    private bool m_inPlayMode = false;
 
     private void Awake()
     {
@@ -127,6 +128,7 @@ public class ProceduralGeneration : MonoBehaviour
     }
     private void Start()
     {
+        m_inPlayMode = true;
         SetUpInitialTemplate();
         SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
     }
@@ -134,7 +136,7 @@ public class ProceduralGeneration : MonoBehaviour
     private void Update()
     {
         //Get current player pos
-        m_playerPositionZ = m_playerControllerRef.GetPlayerPositionZ();
+        m_playerPositionZ = m_playerControllerRef.GetPlayerPosition().z;
         //Update renderdistance relative to player position
         var render_distance_relative = m_playerPositionZ + renderDistance;
         //Get GameMode related stuff
@@ -204,7 +206,7 @@ public class ProceduralGeneration : MonoBehaviour
         m_groundScale = new Vector3(c_originalGroundScaleX, c_originalGroundScaleY, c_originalGroundScaleZ);
         m_wallScale = new Vector3(c_originalWallScaleX, c_originalWallScaleY, c_originalWallScaleZ);
         m_spawnPositionOffsetZ =  m_groundScale.z / 2;
-        m_templateSpawnPosition = playerGO.transform.position + new Vector3(0, -1.5f, m_spawnPositionOffsetZ);  //-1.5f is the height of player spawn offset
+        m_templateSpawnPosition = playerGO.transform.position + new Vector3(0, -m_distanceToGround, m_spawnPositionOffsetZ);  
         m_templateSpawnRotation = Quaternion.identity;
         m_groundColor = new Color32(0, 255, 10, 255);
         m_wallColor = new Color32(10, 95, 2, 255);
@@ -268,32 +270,60 @@ public class ProceduralGeneration : MonoBehaviour
     {
         System.Random rdm = new System.Random();
         //Choose amount of obstacles depending on size of ground/template and obstacleDensity
+        //TODO: multiply with a GameMode dependend modifier?
         int min_amount_of_prefabs_to_spawn = (int) (m_groundScale.z * obstacleDensity)/2;  //restricting min amount to not be too small (like 0)
         int max_amount_of_prefabs_to_spawn = (int) (m_groundScale.z * obstacleDensity);
-        int random_amount_of_prefabs_to_spawn = rdm.Next(0, max_amount_of_prefabs_to_spawn + 1);
-        Debug.Log("groundscaleZ: " + m_groundScale.z + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
+        int random_amount_of_prefabs_to_spawn = rdm.Next(min_amount_of_prefabs_to_spawn, max_amount_of_prefabs_to_spawn);
+        Debug.Log("groundscaleZ: " + m_groundScale.z +" min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
         for (int i = 0; i < random_amount_of_prefabs_to_spawn; i++)
         {
             //Choose random obstacle prefab
-            int randomPrefabNr = rdm.Next(0, m_obstaclePrefabsGOArr.Length);
-            //Calculate spawn area TODO
-            m_obstacleSpawnPosXMin = m_templateSpawnPosition.x - m_groundScale.x / 2;
-            m_obstacleSpawnPosXMax = m_templateSpawnPosition.x + m_groundScale.x / 2;
-            m_obstacleSpawnPosZMin = m_templateSpawnPosition.z - m_groundScale.z / 2;
-            m_obstacleSpawnPosZMax = m_templateSpawnPosition.z + m_groundScale.z / 2;
+            int random_prefab_nr = rdm.Next(0, m_obstaclePrefabsGOArr.Length);
+            //offset needed to not spawn obstacles overlapping with the wall or obstacles from another template
+            float obstacle_spawn_offset = 1f;
+            //Calculate spawn area
+            m_obstacleSpawnPosXMin = m_templateSpawnPosition.x - m_groundScale.x / 2 + obstacle_spawn_offset;   
+            m_obstacleSpawnPosXMax = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
+            m_obstacleSpawnPosZMin = m_templateSpawnPosition.z - m_groundScale.z / 2 + obstacle_spawn_offset;
+            m_obstacleSpawnPosZMax = m_templateSpawnPosition.z + m_groundScale.z / 2 - obstacle_spawn_offset;
             //Randomize spawn positions
-            m_obstacleSpawnPosition = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), 0, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
+            m_obstacleSpawnPosition = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), m_distanceToGround, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
 
-            //TODO: No overlaps
+            
+            RaycastHit hit;
+            //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
+            if(Physics.Raycast(m_obstacleSpawnPosition, Vector3.down, out hit, m_groundScale.z))
+            {
+                Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                Collider[] hit_colliders = new Collider[1];
+                int colliders_found = Physics.OverlapBoxNonAlloc(hit.point, overlapBoxScale, hit_colliders, rotation, rayCastLayer);
+                
+                //No overlaps found -> instantiate the obstacle
+                if (colliders_found == 0)
+                {
+                    //Assign color
+                    m_obstaclePrefabsGOArr[random_prefab_nr].GetComponent<Renderer>().sharedMaterial.color = m_obstacleColor;
+                    //Assign rotation
+                    m_obstacleSpawnRotation = m_obstaclePrefabsGOArr[random_prefab_nr].transform.rotation;
+                    GameObject spawned_obstacle = Instantiate(m_obstaclePrefabsGOArr[random_prefab_nr], m_obstacleSpawnPosition, m_obstacleSpawnRotation);
+                    m_obstacleList.Add(spawned_obstacle);
+                    Debug.Log("Spawned [" + i + "]: " + m_obstaclePrefabsGOArr[random_prefab_nr].gameObject + " at position: " + m_obstacleSpawnPosition);
+                }
+            }
 
-            //Assign color
-            m_obstaclePrefabsGOArr[randomPrefabNr].GetComponent<Renderer>().sharedMaterial.color = m_obstacleColor;
-            //Assign rotation
-            m_obstacleSpawnRotation = m_obstaclePrefabsGOArr[randomPrefabNr].transform.rotation;
-            Instantiate(m_obstaclePrefabsGOArr[randomPrefabNr], m_obstacleSpawnPosition, m_obstacleSpawnRotation);
-            Debug.Log("Spawned " + m_obstaclePrefabsGOArr[randomPrefabNr].gameObject + " at position: " + m_obstacleSpawnPosition);
         }
     }
 
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
 
+        if(m_inPlayMode)
+        {
+            for (int i = 0; i < m_obstacleList.Count; i++)
+            {
+                Gizmos.DrawWireCube(m_obstacleList[i].transform.position, overlapBoxScale);
+            }
+        }
+    }
 }
