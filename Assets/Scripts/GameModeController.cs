@@ -14,9 +14,12 @@ using UnityEngine;
  * copyright law. They may not be disclosed to third parties or copied
  * or duplicated in any form, in whole or in part, without the prior
  * written consent of the author.
- * 
- * ChangeLog
  * ----------------------------
+ * Script Description:
+ * Switches GameModes when certain speed thresholds are hit
+ * 
+ * ----------------------------
+ * ChangeLog:
  *  15.11.2023   FM  created
  *  20.11.2023   FM  added UpdateGameMode() to switch GameMode according to playerspeed hitting certain thresholds
  *  21.11.2023   FM  added getter, added EventHandler to notify ProceduralGeneration whenever the GameMode changes
@@ -25,10 +28,10 @@ using UnityEngine;
  *  26.11.2023   FM  moved GameMode check
  *  
  *  TODO: 
- *      - correct playerspeed check for game mode change
- *  
+ *      - 
  *  Buglist:
  *      - playerspeed is not updated as intended - resolved
+ *      - correct playerspeed check for game mode change - resolved
  *      
  *****************************************************************************/
 public enum GameModes
@@ -94,11 +97,11 @@ public class GameModeController : MonoBehaviour
         //Update nextGameMode
         if (m_nextGameMode == m_currentGameMode)
         {
-            Debug.Log("next game mode = current game mode");
+            //Debug.Log("next game mode = current game mode");
             GameModeChanged = true;
             m_nextGameMode++;
         }
-        Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
+        //Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
     }
 
     private void UpdateGameMode()

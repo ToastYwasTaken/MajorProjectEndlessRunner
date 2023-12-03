@@ -14,9 +14,12 @@ using UnityEngine;
  * copyright law. They may not be disclosed to third parties or copied
  * or duplicated in any form, in whole or in part, without the prior
  * written consent of the author.
- * 
- * ChangeLog
  * ----------------------------
+ * Script Description:
+ * Controls player movement and behaviour
+ * 
+ * ----------------------------
+ * ChangeLog:
  *  18.08.2023   FM  created
  *  14.09.2023   FM  removed unnecessary parts
  *  06.10.2023   FM  added horizontal continous movement, adjusted values, added seperated acceleration and speed variables
@@ -27,7 +30,7 @@ using UnityEngine;
  *  27.11.2023   FM  minor changes
  *  
  *  TODO: 
- *      - Update colliders
+ *      - Implement colliders switching GameModes
  *      
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
