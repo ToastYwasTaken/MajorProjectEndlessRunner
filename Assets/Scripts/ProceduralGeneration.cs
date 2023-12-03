@@ -55,8 +55,6 @@ public class ProceduralGeneration : MonoBehaviour
     #endregion
 
     #region Template Variables
-    [SerializeField, Tooltip("Prefab of basic template to be instantiated")]
-    private GameObject templatePrefabGO;
     private int m_templateCounter = 0;
     private Vector3 m_templateSpawnPosition;
     private Quaternion m_templateSpawnRotation;
@@ -84,7 +82,6 @@ public class ProceduralGeneration : MonoBehaviour
     private Vector3 overlapBoxScale;
     [SerializeField, Tooltip("Layer of colliders to check for inside the overlap box")]
     private LayerMask rayCastLayer;
-    private GameObject[] m_obstaclePrefabsGOArr;
     private float m_obstacleSpawnPosXMin;
     private float m_obstacleSpawnPosXMax;
     private float m_obstacleSpawnPosZMin;
@@ -98,19 +95,19 @@ public class ProceduralGeneration : MonoBehaviour
     [SerializeField, Tooltip("Object spawner GO")]
     private GameObject objectSpawnerGO;
     private ObjectSpawner m_objectSpawnerRef;
-    public static ProceduralGeneration m_instance { get; private set; }
+    public static ProceduralGeneration s_instance { get; private set; }
     private bool m_inPlayMode = false;
     #endregion
     private void Awake()
     {
         //Singleton checks
-        if (m_instance == null && m_instance != this)
+        if (s_instance == null && s_instance != this)
         { 
-            Destroy(m_instance);
+            Destroy(s_instance);
         }
         else
         {
-            m_instance = this;
+            s_instance = this;
         }
         //Null checks and assigning necessary references
         if (gameModeControllerGO == null)
@@ -123,15 +120,14 @@ public class ProceduralGeneration : MonoBehaviour
         }
         m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>();
         m_playerControllerRef = playerGO.GetComponent<PlayerController>();
-        //Load all available obstacles from resources and assign default obstacle color
-        m_obstaclePrefabsGOArr = Resources.LoadAll<GameObject>("OBSTACLES");
+        m_objectSpawnerRef = objectSpawnerGO.GetComponent<ObjectSpawner>();
         m_obstacleColor = new Color(0, 0, 0, 255);
     }
     private void Start()
     {
         m_inPlayMode = true;
         SetUpInitialTemplate();
-        m_objectSpawnerRef.SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
+        m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
     }
 
     private void Update()
@@ -151,7 +147,7 @@ public class ProceduralGeneration : MonoBehaviour
         {
             CalculateNextTemplateValues();
             //Spawn next template
-            m_objectSpawnerRef.SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
+            m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
             //Spawn obstacles
             SpawnRandomObstacles();
         }
@@ -227,7 +223,7 @@ public class ProceduralGeneration : MonoBehaviour
         m_groundScale.z += m_groundSizeIncrease;
         m_wallScale.z += m_groundSizeIncrease;
         //Update templateSpawnPos according to the size increase of the next spawned platform
-        float template_spawn_posZ = m_templateList[m_templateCounter].transform.GetChild(0).GetChild(0).localScale.z ;
+        float template_spawn_posZ = m_objectSpawnerRef.GetAllPCGObjects()[m_templateCounter].GetTemplateGO().transform.GetChild(0).GetChild(0).localScale.z ;
         m_templateSpawnPosition += new Vector3 (0,0,template_spawn_posZ + (m_groundSizeIncrease/2));
         //Increasing the increase for future spawns to counter shorter sections in higher speeds, randomize the increment
         System.Random rdm = new System.Random();
@@ -247,7 +243,7 @@ public class ProceduralGeneration : MonoBehaviour
         for (int i = 0; i < random_amount_of_prefabs_to_spawn; i++)
         {
             //Choose random obstacle prefab
-            int random_prefab_nr = rdm.Next(0, m_obstaclePrefabsGOArr.Length);
+            int random_prefab_nr = rdm.Next(0, m_objectSpawnerRef.GetAllPCGObjects()[m_templateCounter].GetObstacleList().Count);
             //offset needed to not spawn obstacles overlapping with the wall or obstacles from another template
             float obstacle_spawn_offset = 1f;
             //Calculate spawn area
@@ -270,13 +266,13 @@ public class ProceduralGeneration : MonoBehaviour
                 //No overlaps found -> instantiate the obstacle
                 if (colliders_found == 0)
                 {
+                    GameObject[] obstacle_prefabs_arr = m_objectSpawnerRef.GetObstaclePrefabsArr();
                     //Assign color
-                    m_obstaclePrefabsGOArr[random_prefab_nr].GetComponent<Renderer>().sharedMaterial.color = m_obstacleColor;
+                    obstacle_prefabs_arr[random_prefab_nr].GetComponent<Renderer>().sharedMaterial.color = m_obstacleColor;
                     //Assign rotation
-                    m_obstacleSpawnRotation = m_obstaclePrefabsGOArr[random_prefab_nr].transform.rotation;
-                    GameObject spawned_obstacle = Instantiate(m_obstaclePrefabsGOArr[random_prefab_nr], m_obstacleSpawnPosition, m_obstacleSpawnRotation);
-                    m_obstacleList.Add(spawned_obstacle);
-                    Debug.Log("Spawned [" + i + "]: " + m_obstaclePrefabsGOArr[random_prefab_nr].gameObject + " at position: " + m_obstacleSpawnPosition);
+                    m_obstacleSpawnRotation = obstacle_prefabs_arr[random_prefab_nr].transform.rotation;
+                    m_objectSpawnerRef.SpawnObstacle(m_obstacleSpawnPosition, m_obstacleSpawnRotation, m_obstacleColor);
+                    Debug.Log("Spawned [" + i + "]: " + obstacle_prefabs_arr[random_prefab_nr].gameObject + " at position: " + m_obstacleSpawnPosition);
                 }
             }
 
