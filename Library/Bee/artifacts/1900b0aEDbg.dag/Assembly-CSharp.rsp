@@ -355,6 +355,7 @@
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/CustomEditor/ReadOnlyAttribute.cs"
 "Assets/Scripts/GameModeController.cs"
+"Assets/Scripts/ObjectSpawner.cs"
 "Assets/Scripts/PlayerController.cs"
 "Assets/Scripts/ProceduralGeneration.cs"
 -langversion:9.0

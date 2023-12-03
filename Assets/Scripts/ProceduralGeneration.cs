@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
 /******************************************************************************
 * Project: MajorProjectEndlessRunner
@@ -47,17 +48,15 @@ public class ProceduralGeneration : MonoBehaviour
     #region Player Variables
     [SerializeField, Tooltip("Player GameObject in active game scene, gets assigned in Awake() if unassigned")]
     private GameObject playerGO; //Assign player here | Note: DON'T assign the Prefab from Prefabs folder, instead use hierachy player; if no player is assigned, it is found in Awake();
+    [SerializeField, Range(50f, 2000f), Tooltip("Distance restricting active GO in scene to avoid overload")]
+    private int renderDistance = 400;
     private PlayerController m_playerControllerRef;
     private float m_playerPositionZ;
-    private float m_spawnPositionOffsetZ = 0f;
     #endregion
 
     #region Template Variables
     [SerializeField, Tooltip("Prefab of basic template to be instantiated")]
     private GameObject templatePrefabGO;
-    [SerializeField, Range(50f, 2000f), Tooltip ("Distance restricting future prefabs being instantiated to avoid overload")]
-    private int renderDistance = 400;
-    private List<GameObject> m_templateList = new List<GameObject>();
     private int m_templateCounter = 0;
     private Vector3 m_templateSpawnPosition;
     private Quaternion m_templateSpawnRotation;
@@ -86,7 +85,6 @@ public class ProceduralGeneration : MonoBehaviour
     [SerializeField, Tooltip("Layer of colliders to check for inside the overlap box")]
     private LayerMask rayCastLayer;
     private GameObject[] m_obstaclePrefabsGOArr;
-    private List<GameObject> m_obstacleList = new List<GameObject>();
     private float m_obstacleSpawnPosXMin;
     private float m_obstacleSpawnPosXMax;
     private float m_obstacleSpawnPosZMin;
@@ -96,15 +94,18 @@ public class ProceduralGeneration : MonoBehaviour
     private Quaternion m_obstacleSpawnRotation;
     #endregion
 
-    //Other
+    #region Other
+    [SerializeField, Tooltip("Object spawner GO")]
+    private GameObject objectSpawnerGO;
+    private ObjectSpawner m_objectSpawnerRef;
     public static ProceduralGeneration m_instance { get; private set; }
     private bool m_inPlayMode = false;
-
+    #endregion
     private void Awake()
     {
         //Singleton checks
         if (m_instance == null && m_instance != this)
-        {
+        { 
             Destroy(m_instance);
         }
         else
@@ -112,16 +113,16 @@ public class ProceduralGeneration : MonoBehaviour
             m_instance = this;
         }
         //Null checks and assigning necessary references
-        if (playerGO == null)
-        {
-            playerGO = GameObject.FindObjectOfType<PlayerController>().gameObject;
-        }
         if (gameModeControllerGO == null)
         {
             gameModeControllerGO = GameObject.FindObjectOfType<GameModeController>().gameObject;
         }
-        m_playerControllerRef = playerGO.GetComponent<PlayerController>();
+        if(playerGO == null)
+        {
+            playerGO = GameObject.FindObjectOfType<PlayerController>().gameObject;
+        }
         m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>();
+        m_playerControllerRef = playerGO.GetComponent<PlayerController>();
         //Load all available obstacles from resources and assign default obstacle color
         m_obstaclePrefabsGOArr = Resources.LoadAll<GameObject>("OBSTACLES");
         m_obstacleColor = new Color(0, 0, 0, 255);
@@ -130,15 +131,11 @@ public class ProceduralGeneration : MonoBehaviour
     {
         m_inPlayMode = true;
         SetUpInitialTemplate();
-        SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
+        m_objectSpawnerRef.SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
     }
 
     private void Update()
     {
-        //Get current player pos
-        m_playerPositionZ = m_playerControllerRef.GetPlayerPosition().z;
-        //Update renderdistance relative to player position
-        var render_distance_relative = m_playerPositionZ + renderDistance;
         //Get GameMode related stuff
         m_currentGameMode = m_gameModeControllerRef.GetCurrentGameMode();
         if (m_gameModeControllerRef.GameModeChanged)
@@ -146,16 +143,24 @@ public class ProceduralGeneration : MonoBehaviour
             UpdateTemplates();
             m_gameModeControllerRef.GameModeChanged = false;
         }
-        //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + "playerposZ: " + m_playerPositionZ + "render dis rel: " + render_distance_relative);
-        //Generate new Templates when template pos - player position reaches render distance
-        if (m_templateSpawnPosition.z < render_distance_relative)
+        Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + " playerPosZ: " + m_playerPositionZ);
+        //Update playerPos and renderdistance relative to player position
+        m_playerPositionZ = m_playerControllerRef.GetPlayerPosition().z;
+        var render_distance_relative = m_playerPositionZ + renderDistance;
+        if(m_templateSpawnPosition.z < render_distance_relative)
         {
             CalculateNextTemplateValues();
             //Spawn next template
-            SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
+            m_objectSpawnerRef.SpawnTemplate(templatePrefabGO, m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor);
             //Spawn obstacles
             SpawnRandomObstacles();
         }
+        DeleteInactiveTemplates();
+    }
+
+    private void DeleteInactiveTemplates()
+    {
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -205,8 +210,8 @@ public class ProceduralGeneration : MonoBehaviour
     {
         m_groundScale = new Vector3(c_originalGroundScaleX, c_originalGroundScaleY, c_originalGroundScaleZ);
         m_wallScale = new Vector3(c_originalWallScaleX, c_originalWallScaleY, c_originalWallScaleZ);
-        m_spawnPositionOffsetZ =  m_groundScale.z / 2;
-        m_templateSpawnPosition = playerGO.transform.position + new Vector3(0, -m_distanceToGround, m_spawnPositionOffsetZ);  
+        float spawn_position_offset_z =  m_groundScale.z / 2;
+        m_templateSpawnPosition = playerGO.transform.position + new Vector3(0, -m_distanceToGround, spawn_position_offset_z);  
         m_templateSpawnRotation = Quaternion.identity;
         m_groundColor = new Color32(0, 255, 10, 255);
         m_wallColor = new Color32(10, 95, 2, 255);
@@ -228,42 +233,6 @@ public class ProceduralGeneration : MonoBehaviour
         System.Random rdm = new System.Random();
         m_groundSizeIncrease = rdm.Next(1,4);
         m_templateCounter++;
-    }
-
-    /// <summary>
-    /// Spawning a template at given position, rotation and assigning the templates childs ground and wall prefab scales
-    /// Calling UpdatePlayerSpeedModifier() to decrease player speed increase
-    /// </summary>
-    /// <param name="_templateToSpawn">Template that is spawned</param>
-    /// <param name="_templateSpawnPosition">Template spawn position</param>
-    /// <param name="_templateSpawnRotation">Template spawn rotation</param>
-    /// <param name="_groundScaleVector">Child (GROUND) of Child (GROUND) localscale</param>
-    /// <param name="_wallScaleVector">Child (WALL) of Child (WALL) localscale</param>
-    /// <param name="_groundColor">Child (GROUND) of Child (GROUND) coloring</param>
-    /// <param name="_wallColor">Child (WALL) of Child (Wall) coloring</param>
-    private void SpawnTemplate(GameObject _templateToSpawn, Vector3 _templateSpawnPosition, Quaternion _templateSpawnRotation, Vector3 _groundScaleVector, Vector3 _wallScaleVector, Color32 _groundColor, Color32 _wallColor)
-    {
-        GameObject template = Instantiate(_templateToSpawn, _templateSpawnPosition, _templateSpawnRotation);
-        //Update the prefabs scales
-        //ground
-        template.transform.GetChild(0).GetChild(0).localScale = _groundScaleVector;
-        template.transform.GetChild(0).GetChild(0).GetComponent<Renderer>().material.color = _groundColor;
-        //right lower wall
-        template.transform.GetChild(1).GetChild(0).localScale = _wallScaleVector;
-        template.transform.GetChild(1).GetChild(0).GetComponent<Renderer>().material.color = _wallColor;
-        //left lower wall
-        template.transform.GetChild(1).GetChild(2).localScale = _wallScaleVector;
-        template.transform.GetChild(1).GetChild(2).GetComponent<Renderer>().material.color = _wallColor;
-        //Update wallScaleVector for upper walls to make them higher
-        _wallScaleVector = new Vector3(_wallScaleVector.x, 7f, _wallScaleVector.z);
-        //right upper wall
-        template.transform.GetChild(1).GetChild(1).localScale = _wallScaleVector;
-        //left upper wall
-        template.transform.GetChild(1).GetChild(3).localScale = _wallScaleVector;
-
-        //Adding spawned template to list
-        m_templateList.Add(template);
-        Debug.Log("Spawned Template nr."+ m_templateList.Count +" at: " + _templateSpawnPosition + " with size: " + _groundScaleVector.z);
     }
 
     private void SpawnRandomObstacles()
@@ -311,19 +280,6 @@ public class ProceduralGeneration : MonoBehaviour
                 }
             }
 
-        }
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-
-        if(m_inPlayMode)
-        {
-            for (int i = 0; i < m_obstacleList.Count; i++)
-            {
-                Gizmos.DrawWireCube(m_obstacleList[i].transform.position, overlapBoxScale);
-            }
         }
     }
 }
