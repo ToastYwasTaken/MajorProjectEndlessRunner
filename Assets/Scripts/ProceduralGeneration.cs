@@ -52,6 +52,8 @@ using UnityEngine;
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
 {
+    public static ProceduralGeneration Instance { get; private set; }
+
     #region GameController Variables
     [SerializeField, Tooltip("GameModeController GameObject in game scene, gets assigned in Awake() if unassigned")]
     private GameObject gameModeControllerGO;
@@ -62,9 +64,9 @@ public class ProceduralGeneration : MonoBehaviour
     #region Player Variables
     [SerializeField, Tooltip("Player GameObject in active game scene, gets assigned in Awake() if unassigned")]
     private GameObject playerGO; //Assign player here | Note: DON'T assign the Prefab from Prefabs folder, instead use hierachy player; if no player is assigned, it is found in Awake();
+    private PlayerController m_playerControllerRef;
     [SerializeField, Range(50f, 2000f), Tooltip("Distance restricting active GO in scene to avoid overload")]
     private int renderDistance = 400;
-    private PlayerController m_playerControllerRef;
     private float m_playerPositionZ;
     #endregion
 
@@ -102,7 +104,6 @@ public class ProceduralGeneration : MonoBehaviour
     private float m_obstacleSpawnPosXMax;
     private float m_obstacleSpawnPosZMin;
     private float m_obstacleSpawnPosZMax;
-    private Vector3 m_obstacleSpawnPosition;
     private Color32 m_obstacleColor;
     #endregion
 
@@ -110,38 +111,29 @@ public class ProceduralGeneration : MonoBehaviour
     [SerializeField, Tooltip("Object spawner GO")]
     private GameObject objectSpawnerGO;
     private ObjectSpawner m_objectSpawnerRef;
-    public static ProceduralGeneration s_instance { get; private set; }
     private bool m_inPlayMode = false;
     #endregion
     private void Awake()
     {
         //Singleton checks
-        if (s_instance == null && s_instance != this)
+        if (Instance == null && Instance != this)
         { 
-            Destroy(s_instance);
+            Destroy(Instance);
         }
         else
         {
-            s_instance = this;
+            Instance = this;
         }
         //Null checks and assigning necessary references
-        if (gameModeControllerGO == null)
-        {
-            gameModeControllerGO = GameObject.FindObjectOfType<GameModeController>().gameObject;
-        }
-        if(playerGO == null)
-        {
-            playerGO = GameObject.FindObjectOfType<PlayerController>().gameObject;
-        }
-        m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>();
-        m_playerControllerRef = playerGO.GetComponent<PlayerController>();
-        m_objectSpawnerRef = objectSpawnerGO.GetComponent<ObjectSpawner>();
+        if (gameModeControllerGO != null) { m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>(); }
+        if(playerGO != null) { m_playerControllerRef = playerGO.GetComponent<PlayerController>(); }
+        if(objectSpawnerGO != null) { m_objectSpawnerRef = objectSpawnerGO.GetComponent<ObjectSpawner>(); }
         m_obstacleColor = new Color(0, 0, 0, 255);
     }
     private void Start()
     {
         m_inPlayMode = true;
-        SetUpInitialTemplate();
+        CalculateStartingTemplate();
         m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor, true);
     }
 
@@ -149,10 +141,10 @@ public class ProceduralGeneration : MonoBehaviour
     {
         //Get GameMode related stuff
         m_currentGameMode = m_gameModeControllerRef.GetCurrentGameMode();
-        if (m_gameModeControllerRef.GameModeChanged)
+        if (m_gameModeControllerRef.GetGameModeChanged())
         {
-            UpdateTemplates();
-            m_gameModeControllerRef.GameModeChanged = false;
+            UpdateTemplateColor();
+            m_gameModeControllerRef.SetGameModeChanged(false);
         }
         //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + " playerPosZ: " + m_playerPositionZ);
         //Update playerPos and renderdistance relative to player position
@@ -164,21 +156,18 @@ public class ProceduralGeneration : MonoBehaviour
             //Spawn next template
             m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor, false);
             //Spawn obstacles
-            SpawnRandomObstacles();
+            CalculateRandomObstacles();
+            m_objectSpawnerRef.SaveTemplateAndObstaclesToDic();
+            m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
         }
-        DeleteInactiveTemplates();
     }
 
-    //TODO
-    private void DeleteInactiveTemplates()
-    {
-        
-    }
+
 
     /// <summary>
     /// Change colors of prefab on difficulty change
     /// </summary>
-    private void UpdateTemplates()
+    private void UpdateTemplateColor()
     {
         //Set colors according to game mode
         //They stay the same for START and VERY_EASY
@@ -218,7 +207,7 @@ public class ProceduralGeneration : MonoBehaviour
     /// Setting up the starting template and instantiating it
     /// This will not be randomized and always look like the input prefab with adjusted spawn position
     /// </summary>
-    private void SetUpInitialTemplate()
+    private void CalculateStartingTemplate()
     {
         m_groundScale = new Vector3(c_originalGroundScaleX, c_originalGroundScaleY, c_originalGroundScaleZ);
         m_wallScale = new Vector3(c_originalWallScaleX, c_originalWallScaleY, c_originalWallScaleZ);
@@ -247,14 +236,18 @@ public class ProceduralGeneration : MonoBehaviour
         m_templateCounter++;
     }
 
-    private void SpawnRandomObstacles()
+    /// <summary>
+    /// This randomizes the spawning process for obstacles, taking into account the bounds of walls,
+    /// ignoring the starting template, and spawning more obstacle with higher template length and player speed
+    /// </summary>
+    private void CalculateRandomObstacles()
     {
         System.Random rdm = new System.Random();
         //Choose amount of obstacles depending on size of ground/template and obstacleDensity
         int min_amount_of_prefabs_to_spawn = (int) (m_groundScale.z * obstacleDensity *((int)m_currentGameMode+1) * 0.1f)/2;  //restricting min amount to not be too small (like 0)
         int max_amount_of_prefabs_to_spawn = (int) (m_groundScale.z * obstacleDensity *((int)m_currentGameMode+1) * 0.1f);
         int random_amount_of_prefabs_to_spawn = rdm.Next(min_amount_of_prefabs_to_spawn, max_amount_of_prefabs_to_spawn);
-        Debug.Log("groundscaleZ: " + m_groundScale.z +" min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
+        //Debug.Log("groundscaleZ: " + m_groundScale.z +" min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
         int obstaclesSpawnedCounter = 0;
         for (int i = 0; i < random_amount_of_prefabs_to_spawn; i++)
         {
@@ -268,11 +261,11 @@ public class ProceduralGeneration : MonoBehaviour
             m_obstacleSpawnPosZMin = m_templateSpawnPosition.z - m_groundScale.z / 2 + obstacle_spawn_offset;
             m_obstacleSpawnPosZMax = m_templateSpawnPosition.z + m_groundScale.z / 2 - obstacle_spawn_offset;
             //Randomize spawn positions
-            m_obstacleSpawnPosition = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), m_distanceToGround, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
+            var obstacle_spawn_position = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), m_distanceToGround, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
 
             //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
             RaycastHit hit;
-            if(Physics.Raycast(m_obstacleSpawnPosition, Vector3.down, out hit, m_groundScale.z))
+            if(Physics.Raycast(obstacle_spawn_position, Vector3.down, out hit, m_groundScale.z))
             {
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
                 Collider[] hit_colliders = new Collider[1];
@@ -282,11 +275,11 @@ public class ProceduralGeneration : MonoBehaviour
                 if (colliders_found == 0)
                 {
                     //Spawn Obstacle
-                    m_objectSpawnerRef.SpawnObstacle(m_obstacleSpawnPosition, Quaternion.identity, m_obstacleColor, random_prefab_nr);
+                    m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_position, Quaternion.identity, m_obstacleColor, random_prefab_nr);
                     obstaclesSpawnedCounter++;
                 }
             }
         }
-            Debug.Log("Actually spawned: " + obstaclesSpawnedCounter + " obstacles");
+            //Debug.Log("Actually spawned: " + obstaclesSpawnedCounter + " obstacles");
     }
 }

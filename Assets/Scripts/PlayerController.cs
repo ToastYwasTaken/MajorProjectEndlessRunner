@@ -28,9 +28,10 @@ using UnityEngine;
  *  22.11.2023   FM  added getter
  *  24.11.2023   FM  removed reference to ProceduralGeneration as of now; added tooltips
  *  27.11.2023   FM  minor changes
+ *  05.12.2023   FM  added gameover checks on colliders
  *  
  *  TODO: 
- *      - Implement colliders switching GameModes
+ *      - Implement colliders switching GameModes - done
  *      
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
@@ -38,8 +39,8 @@ using UnityEngine;
  *****************************************************************************/
 public class PlayerController : MonoBehaviour
 {
-    //[SerializeField]
-    //private GameObject proceduralGeneratorGO;
+    [SerializeField]
+    private GameObject gameModeControllerGO;
     [SerializeField, Tooltip("Speed moving forward")]
     private float speedVertical = 5f; 
     [SerializeField, Tooltip("Speed moving left and right, depending on player input")]
@@ -56,26 +57,33 @@ public class PlayerController : MonoBehaviour
     private const float c_jumpForce = 10f;    //jump force multiplier
     private const float c_startingAccellerationVertical = 0.05f; //accelleration moving forward
     private const float c_rbMass = 1f;
-    private const float c_fallSpeedMultiplier = 2.8f;
+    private const float c_fallspeedMultiplier = 2.8f;
     private const float c_gravityConstant = -9.81f;
     private const float c_gravityScale = 1.5f;    //scale factor for the gravity
     private float m_startingAccellerationHorizontal;  //accelleration moving left and right
     private Rigidbody m_rb;
-    //private ProceduralGeneration m_proceduralGeneratorRef;
+    private GameModeController m_gameModeControllerRef;
     private Vector3 m_keyInput;
+
+    public static PlayerController Instance { get; private set; }
 
     private void Awake()
     {
-        //if (proceduralGeneratorGO == null)
-        //{
-        //    proceduralGeneratorGO = GameObject.FindAnyObjectByType<ProceduralGeneration>().gameObject;
-        //}
+        //Singleton checks
+        if (Instance == null && Instance != this)
+        {
+            Destroy(Instance);
+        }
+        else
+        {
+            Instance = this;
+        }
+        if (gameModeControllerGO != null) { m_gameModeControllerRef = gameModeControllerGO.GetComponent<GameModeController>(); }
     }
     void Start()
     {
         m_rb = transform.GetComponent<Rigidbody>();
         m_rb.mass = c_rbMass;
-        //m_proceduralGeneratorRef = proceduralGeneratorGO.GetComponent<ProceduralGeneration>();
 
         m_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
         //Set player spawn values
@@ -113,7 +121,7 @@ public class PlayerController : MonoBehaviour
         //calculating quicker fall
         if (m_rb.velocity.y < 0)
         {
-            m_rb.velocity += Vector3.up * scaledGravityVector.y * (c_fallSpeedMultiplier - 1) * Time.deltaTime;
+            m_rb.velocity += Vector3.up * scaledGravityVector.y * (c_fallspeedMultiplier - 1) * Time.deltaTime;
             rbVelocityY = m_rb.velocity.y;
         }
     }
@@ -152,7 +160,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Obstacle"))
         {
-
+            m_gameModeControllerRef.SetCurrentGameMode(GameModes.GAMEOVER);
         }
     }
 
