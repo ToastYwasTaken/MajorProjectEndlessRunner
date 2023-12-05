@@ -157,9 +157,9 @@ public class ProceduralGeneration : MonoBehaviour
             m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor, false);
             //Spawn obstacles
             CalculateRandomObstacles();
-            m_objectSpawnerRef.SaveTemplateAndObstaclesToDic();
-            m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
+            m_objectSpawnerRef.SaveTemplateAndObstaclesToList();
         }
+            m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
     }
 
 

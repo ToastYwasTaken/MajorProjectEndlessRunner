@@ -24,12 +24,13 @@ using UnityEngine.VFX;
 *  03.12.2023   FM  created; imported functionality from ProceduralGeneration.cs to split up spawning from procedural generation
 *  04.12.2023   FM  added changing of instantiated object names; added structuring of hierarchy by setting the templates OBSTACLES child as parent;
 *                   fixed saving of templates and obstacles in dictionary
+*  05.12.2023   FM  replaced dictionary with list; implemented object removing
 *  
 *  TODO:
 *       - Change names from prefabs when spawning - done
-*       - Properly Debug the dictionary
+*       - Properly Debug the dictionary - done
 *  Buglist:
-*       - 
+*       - fix object deleting
 *  
 *****************************************************************************/
 public class ObjectSpawner : MonoBehaviour
@@ -38,8 +39,7 @@ public class ObjectSpawner : MonoBehaviour
     [SerializeField, Tooltip("Prefab of basic template to be instantiated")]
     private GameObject templatePrefabGO;
     private GameObject[] m_obstaclePrefabsGOArr;
-    private Dictionary<int, TemplateWithObstacles> m_pcgObjectsDic = new Dictionary<int, TemplateWithObstacles>();
-    private int m_dictionaryID = 0;
+    private List<TemplateWithObstacles> m_pcgObjectsList = new List<TemplateWithObstacles>();
     private GameObject m_currentTemplateGO;
     private List<GameObject> m_currentObstacleList = new List<GameObject>();
     private int m_templateCounter = 0;
@@ -95,8 +95,7 @@ public class ObjectSpawner : MonoBehaviour
         if (_isStartingTemplate)
         {
             //adding starting template without obstacles; if it's not, it will get added along with it's obstacles in SpawnObstacle()
-            m_pcgObjectsDic.Add(m_dictionaryID, new TemplateWithObstacles(m_currentTemplateGO, new List<GameObject>()));
-            m_dictionaryID++;
+            m_pcgObjectsList.Add(new TemplateWithObstacles(m_currentTemplateGO, new List<GameObject>()));
         }
         m_templateCounter++;
     }
@@ -123,45 +122,64 @@ public class ObjectSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Saves the instantiated template with it's obstacles to a dictionary
+    /// Saves the instantiated template with it's obstacles to a list
     /// </summary>
-    public void SaveTemplateAndObstaclesToDic()
+    public void SaveTemplateAndObstaclesToList()
     {
         //Create new object storing templateGO and all obstacles that were spawned on it
         TemplateWithObstacles templateWithObstacles = new TemplateWithObstacles(m_currentTemplateGO, m_currentObstacleList);
-        //Adding the object to the dictionary
-        m_pcgObjectsDic.Add(m_dictionaryID, templateWithObstacles);
-        //string debugstring = "";
-        //for (int i = 0; i < procedurallyGeneratedObjectsDic.Count; i++)
-        //{
-        //    string debug_template = procedurallyGeneratedObjectsDic[i].GetTemplateGO().gameObject.name;
-        //    debugstring += "Key[" + i + "] is '" + debug_template + "' and contains a total of "+ procedurallyGeneratedObjectsDic[i].GetObstacleList().Count + " values: ";
-
-        //    for (int j = 0; j < procedurallyGeneratedObjectsDic[i].GetObstacleList().Count; j++)
-        //    {
-        //        string debug_obstacle = procedurallyGeneratedObjectsDic[i].GetObstacleList()[j].gameObject.name;
-        //        debugstring += "Value["+ j +"]Obstacle named '" + debug_obstacle + "'";
-        //    }
-        //}
-        //Debug.Log(debugstring);
-        m_dictionaryID++;
+        //Adding the object to the list
+        m_pcgObjectsList.Add(templateWithObstacles);
+        string debugstring = "";
+        for (int i = 0; i < m_pcgObjectsList.Count; i++)
+        {
+            string debug_template = m_pcgObjectsList[i].GetTemplateGO().gameObject.name;
+            debugstring += "Template[" + i + "] GO is: '" + debug_template + "' and contains a total of " + m_pcgObjectsList[i].GetObstacleList().Count + " values: ";
+            for (int j = 0; j < m_pcgObjectsList[i].GetObstacleList().Count; j++)
+            {
+                string debug_obstacle = m_pcgObjectsList[i].GetObstacleList()[j].gameObject.name;
+                debugstring += "Obstacle[" + j + "] is: '" + debug_obstacle + "'";
+            }
+            debugstring += "\n";
+        }
+        Debug.Log(debugstring);
         //reset obstacle counter
         m_obstacleCounter = 0;
     }
 
     /// <summary>
-    /// Removes all unused objects from the dictionary and deletes them
+    /// Removes all unused objects from the list and deletes them
+    /// Check list from first to last element, stop first time unsuccessful
     /// </summary>
     /// <param name="_playerPosZ"></param>
     public void DeleteUnusedObjects(float _playerPosZ)
     {
+        bool check_failed = false;
+        while(!check_failed) 
+        {
+            TemplateWithObstacles temp_with_obstacles_to_check = m_pcgObjectsList.ElementAt(0);
+            if (temp_with_obstacles_to_check.GetTemplateGO().transform.position.z < _playerPosZ)
+            {
+                //Delete template
+                Destroy(temp_with_obstacles_to_check.GetTemplateGO().gameObject);
+                //Delete obstacles
+                foreach (var item in temp_with_obstacles_to_check.GetObstacleList())
+                {
+                    Destroy(item.gameObject);
+                }
+                //remove from list
+                m_pcgObjectsList.RemoveAt(0);
+                Debug.Log("List object deleted and GO destroyed");
+            }
+            else
+            {
+                check_failed = true;
+            }
+        }
 
-        var matches = m_pcgObjectsDic.Where(item => item.Value.GetTemplateGO().transform.position.z < _playerPosZ);
-        
-        matches.ToDictionary(item => item.Key, item => item.Value);
     }
 
-    public Dictionary<int, TemplateWithObstacles> GetAllPCGObjects() { return m_pcgObjectsDic;}
+    public List<TemplateWithObstacles> GetAllPCGObjects() { return m_pcgObjectsList;}
     public GameObject[] GetObstaclePrefabsArr() { return m_obstaclePrefabsGOArr; }
 }
 

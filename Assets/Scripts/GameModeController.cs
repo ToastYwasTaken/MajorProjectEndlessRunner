@@ -56,6 +56,12 @@ public class GameModeController : MonoBehaviour
     [SerializeField]
     private GameObject playerGO;
     //Threshold describing the speed needed to switch to higher difficulty
+
+    [SerializeField, ReadOnly]
+    private GameModes m_currentGameMode;
+    private GameModes m_nextGameMode;
+    private bool m_gameModeChanged;
+
     [SerializeField, Tooltip("Threshold to be hit to enter VeryEasy Mode (This should be active from the start)")]
     private float speedThresholdVeryEasy;
     [SerializeField, Tooltip("Threshold to be hit to enter Easy Mode")]
@@ -68,10 +74,6 @@ public class GameModeController : MonoBehaviour
     private float speedThresholdVeryHard;
     [SerializeField, Tooltip("Threshold to be hit to enter Extreme Mode")]
     private float speedThresholdExtreme;
-
-    private GameModes m_currentGameMode;
-    private GameModes m_nextGameMode;
-    private bool m_gameModeChanged;
 
     private PlayerController m_playerControllerRef;
     private float m_playerSpeed;

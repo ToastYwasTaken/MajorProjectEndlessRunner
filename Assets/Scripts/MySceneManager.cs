@@ -53,7 +53,7 @@ public class MySceneManager : MonoBehaviour
     {
         SceneManager.LoadScene("MainMenu");
     }
-    public void ExtitGame()
+    public void ExitGame()
     {
         Application.Quit();
     }
