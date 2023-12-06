@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 /******************************************************************************
 * Project: MajorProjectEndlessRunner
-* File: GameModeController.cs
+* File: MySceneManager.cs
 * Version: 1.0
 * Autor: Franz M?rike (FM)
 * 

@@ -25,6 +25,7 @@ using UnityEngine.VFX;
 *  04.12.2023   FM  added changing of instantiated object names; added structuring of hierarchy by setting the templates OBSTACLES child as parent;
 *                   fixed saving of templates and obstacles in dictionary
 *  05.12.2023   FM  replaced dictionary with list; implemented object removing
+*  06.12.2023   FM  fixed OutOfRangeException in DeleteUnusedObjects()
 *  
 *  TODO:
 *       - Change names from prefabs when spawning - done
@@ -152,13 +153,16 @@ public class ObjectSpawner : MonoBehaviour
     /// Check list from first to last element, stop first time unsuccessful
     /// </summary>
     /// <param name="_playerPosZ"></param>
-    public void DeleteUnusedObjects(float _playerPosZ)
+    /// <returns>count of TemplateWithObstacle</returns>
+    public int DeleteUnusedObjects(float _playerPosZ)
     {
         bool check_failed = false;
+        int temp_with_obstacles_removed_count = 0;
         while(!check_failed) 
         {
             TemplateWithObstacles temp_with_obstacles_to_check = m_pcgObjectsList.ElementAt(0);
-            if (temp_with_obstacles_to_check.GetTemplateGO().transform.position.z < _playerPosZ)
+            GameObject template_go = temp_with_obstacles_to_check.GetTemplateGO();
+            if (template_go.transform.position.z + template_go.transform.GetChild(0).GetChild(0).localScale.z/2 < _playerPosZ)
             {
                 //Delete template
                 Destroy(temp_with_obstacles_to_check.GetTemplateGO().gameObject);
@@ -169,13 +173,15 @@ public class ObjectSpawner : MonoBehaviour
                 }
                 //remove from list
                 m_pcgObjectsList.RemoveAt(0);
-                Debug.Log("List object deleted and GO destroyed");
+                temp_with_obstacles_removed_count++;
+                //Debug.Log("List object deleted and GO destroyed");
             }
             else
             {
                 check_failed = true;
             }
         }
+        return temp_with_obstacles_removed_count;
 
     }
 

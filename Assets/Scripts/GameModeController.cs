@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.RestService;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 /******************************************************************************
 * Project: MajorProjectEndlessRunner
 * File: GameModeController.cs
@@ -120,6 +119,9 @@ public class GameModeController : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// Updates the game mode whenever speed thresholds are passed by the players velocity
+    /// </summary>
     private void UpdateGameMode()
     {
         //rounded value needed to avoid skipping hitting a threshold
@@ -138,18 +140,22 @@ public class GameModeController : MonoBehaviour
         else if (playerSpeedRounded == speedThresholdMedium)
         {
             m_currentGameMode = GameModes.MEDIUM;
+            Debug.Log("Hit medium speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdHard)
         {
             m_currentGameMode = GameModes.HARD;
+            Debug.Log("Hit hard speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdVeryHard)
         {
             m_currentGameMode = GameModes.VERY_HARD;
+            Debug.Log("Hit very hard speed threshold");
         }
         else if(playerSpeedRounded == speedThresholdExtreme)
         {
             m_currentGameMode = GameModes.EXTREME;
+            Debug.Log("Hit extreme speed threshold");
         }
 
     }

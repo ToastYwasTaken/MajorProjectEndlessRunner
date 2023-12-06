@@ -159,7 +159,9 @@ public class ProceduralGeneration : MonoBehaviour
             CalculateRandomObstacles();
             m_objectSpawnerRef.SaveTemplateAndObstaclesToList();
         }
-            m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
+            //delete unused objects behind player; update list, update templateCounter
+            int deleted_templates_count = m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
+            m_templateCounter -= deleted_templates_count;
     }
 
 
