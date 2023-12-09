@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using UnityEngine;
 /******************************************************************************
@@ -43,9 +44,11 @@ using UnityEngine;
 *  26.11.2023   FM  fixed GameMode changing to work accordingly and adjust the colors of the spawned prefabs as wanted, added SpawnBehaviour for random Obstacles
 *  27.11.2023   FM  implemented obstacle spawning, tweaked constraints and restricted spawn overlaps by raycasting
 *  03.12.2023   FM  exported obstacle spawning to ObjectSpawner.cs; adjusted functionality in here; tweaked obstacle spawn rate
+*  09.12.2023   FM  modified PCG algorithm; added defaultObstacleSpawnValue
 *  
 *  TODO:
 *       - tweak constraints for Obstacle Spawning - done
+*       - fix randomization bias
 *  Buglist:
 *       - resolve accessing variables from other GO not working - resolved
 *  
@@ -89,7 +92,7 @@ public class ProceduralGeneration : MonoBehaviour
     private const float c_originalGroundScaleY = 1f;
     private const float c_originalGroundScaleZ = 30f;
     private float m_distanceToGround = 1.5f;
-    private float m_groundSizeIncrease = 5f;
+    private float m_groundSizeIncrease = 0f;
     private Color32 m_groundColor;
     #endregion
 
@@ -100,6 +103,7 @@ public class ProceduralGeneration : MonoBehaviour
     private Vector3 overlapBoxScale;
     [SerializeField, Tooltip("Layer of colliders to check for inside the overlap box")]
     private LayerMask rayCastLayer;
+    private int c_defaultObstacleSpawnValue = 2;
     private float m_obstacleSpawnPosXMin;
     private float m_obstacleSpawnPosXMax;
     private float m_obstacleSpawnPosZMin;
@@ -155,12 +159,14 @@ public class ProceduralGeneration : MonoBehaviour
             CalculateNextTemplateValues();
             //Spawn next template
             m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor, false);
+            //Debug.Log("TempSpawnPos: " + m_templateSpawnPosition + " - groundsizeIncrease: " + m_groundSizeIncrease);
             //Spawn obstacles
             CalculateRandomObstacles();
             m_objectSpawnerRef.SaveTemplateAndObstaclesToList();
         }
             //delete unused objects behind player; update list, update templateCounter
             int deleted_templates_count = m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
+            Debug.Log("deleted templates count: " + deleted_templates_count);
             m_templateCounter -= deleted_templates_count;
     }
 
@@ -232,9 +238,12 @@ public class ProceduralGeneration : MonoBehaviour
         //Update templateSpawnPos according to the size increase of the next spawned platform
         float template_spawn_posZ = m_objectSpawnerRef.GetAllPCGObjects()[m_templateCounter].GetTemplateGO().transform.GetChild(0).GetChild(0).localScale.z ;
         m_templateSpawnPosition += new Vector3 (0,0,template_spawn_posZ + (m_groundSizeIncrease/2));
-        //Increasing the increase for future spawns to counter shorter sections in higher speeds, randomize the increment
+        //Increasing the size increase for future spawns to counter shorter sections in higher speeds, randomize the increment
         System.Random rdm = new System.Random();
-        m_groundSizeIncrease = rdm.Next(1,4);
+        //Calculate ground size increase
+        int player_speed_rounded = (int)m_playerControllerRef.GetVerticalSpeed();
+        int min_ground_size_increase = player_speed_rounded / 2;
+        m_groundSizeIncrease = rdm.Next(min_ground_size_increase,player_speed_rounded);
         m_templateCounter++;
     }
 
@@ -246,11 +255,11 @@ public class ProceduralGeneration : MonoBehaviour
     {
         System.Random rdm = new System.Random();
         //Choose amount of obstacles depending on size of ground/template and obstacleDensity
-        int min_amount_of_prefabs_to_spawn = (int) (m_groundScale.z * obstacleDensity *((int)m_currentGameMode+1) * 0.1f)/2;  //restricting min amount to not be too small (like 0)
-        int max_amount_of_prefabs_to_spawn = (int) (m_groundScale.z * obstacleDensity *((int)m_currentGameMode+1) * 0.1f);
+        int max_amount_of_prefabs_to_spawn = (c_defaultObstacleSpawnValue +((int) ((m_groundScale.z - c_originalGroundScaleZ) * obstacleDensity *(1 + (int)m_currentGameMode) * 0.1f)));
+        int min_amount_of_prefabs_to_spawn = max_amount_of_prefabs_to_spawn/2;  
         int random_amount_of_prefabs_to_spawn = rdm.Next(min_amount_of_prefabs_to_spawn, max_amount_of_prefabs_to_spawn);
-        //Debug.Log("groundscaleZ: " + m_groundScale.z +" min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
-        int obstaclesSpawnedCounter = 0;
+        Debug.Log("groundscaleZ: " + m_groundScale.z + "gameModeModifier: "+ (1 + (int)m_currentGameMode) * 0.1f + " min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
+        int obstacles_spawned_counter = 0;
         for (int i = 0; i < random_amount_of_prefabs_to_spawn; i++)
         {
             //Choose random obstacle prefab
@@ -262,24 +271,33 @@ public class ProceduralGeneration : MonoBehaviour
             m_obstacleSpawnPosXMax = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
             m_obstacleSpawnPosZMin = m_templateSpawnPosition.z - m_groundScale.z / 2 + obstacle_spawn_offset;
             m_obstacleSpawnPosZMax = m_templateSpawnPosition.z + m_groundScale.z / 2 - obstacle_spawn_offset;
+            Vector3 obstacle_spawn_position;
+            bool spawned_successfully = false;
+            int break_value = 100;
+            int attempts = 0;
+            while (!spawned_successfully && attempts < break_value)
+            {
             //Randomize spawn positions
-            var obstacle_spawn_position = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), m_distanceToGround, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
+            obstacle_spawn_position = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), m_distanceToGround, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
 
             //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
             RaycastHit hit;
-            if(Physics.Raycast(obstacle_spawn_position, Vector3.down, out hit, m_groundScale.z))
-            {
-                Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                Collider[] hit_colliders = new Collider[1];
-                int colliders_found = Physics.OverlapBoxNonAlloc(hit.point, overlapBoxScale, hit_colliders, rotation, rayCastLayer);
-                
-                //No overlaps found -> instantiate the obstacle
-                if (colliders_found == 0)
+                if(Physics.Raycast(obstacle_spawn_position, Vector3.down, out hit, m_groundScale.z))
                 {
-                    //Spawn Obstacle
-                    m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_position, Quaternion.identity, m_obstacleColor, random_prefab_nr);
-                    obstaclesSpawnedCounter++;
+                    Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                    Collider[] hit_colliders = new Collider[1];
+                    int colliders_found = Physics.OverlapBoxNonAlloc(hit.point, overlapBoxScale, hit_colliders, rotation, rayCastLayer);
+                
+                    //No overlaps found -> instantiate the obstacle
+                    if (colliders_found == 0)
+                    {
+                      //Spawn Obstacle
+                       m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_position, Quaternion.identity, m_obstacleColor, random_prefab_nr);
+                       obstacles_spawned_counter++;
+                        spawned_successfully = true;
+                    }
                 }
+                attempts++;
             }
         }
             //Debug.Log("Actually spawned: " + obstaclesSpawnedCounter + " obstacles");

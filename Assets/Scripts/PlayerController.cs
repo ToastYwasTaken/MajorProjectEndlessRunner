@@ -32,6 +32,7 @@ using UnityEngine;
  *  
  *  TODO: 
  *      - Implement colliders switching GameModes - done
+ *      - Fix speed increase to work properly
  *      
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
@@ -47,11 +48,11 @@ public class PlayerController : MonoBehaviour
     private float speedHorizontal = 5f; 
     [SerializeField, Range(0.5f, 1.2f), Tooltip("Modifies accelleration of speed")]
     private float speedModifier = 0.9f;
-    [SerializeField, ReadOnly, Tooltip("Jump / falling velocity applied to the rb")]
+    [SerializeField, Tooltip("Jump / falling velocity applied to the rb")]
     private float rbVelocityY; 
-    [SerializeField, ReadOnly, Tooltip("Bool for jumping behavior")]
+    [SerializeField, Tooltip("Bool for jumping behavior")]
     private bool isGrounded;   
-    [SerializeField, ReadOnly, Tooltip("Scales gravity to accellerate player fall speed")]
+    [SerializeField, Tooltip("Scales gravity to accellerate player fall speed")]
     private Vector3 scaledGravityVector; 
 
     private const float c_jumpForce = 10f;    //jump force multiplier
@@ -100,7 +101,6 @@ public class PlayerController : MonoBehaviour
 
     private void UpdatePlayerSpeed()
     {
-        speedModifier = 0.9f;
         speedVertical += Time.deltaTime * c_startingAccellerationVertical * speedModifier;
         speedHorizontal += Time.deltaTime * m_startingAccellerationHorizontal * speedModifier;
     }

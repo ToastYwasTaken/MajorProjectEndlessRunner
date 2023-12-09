@@ -26,12 +26,15 @@ using UnityEngine.VFX;
 *                   fixed saving of templates and obstacles in dictionary
 *  05.12.2023   FM  replaced dictionary with list; implemented object removing
 *  06.12.2023   FM  fixed OutOfRangeException in DeleteUnusedObjects()
+*  09.12.2023   FM  fixed obstacle list bug where it deleted obstacles up ahead, because the list was reset at the wrong point
+*  
 *  
 *  TODO:
 *       - Change names from prefabs when spawning - done
 *       - Properly Debug the dictionary - done
 *  Buglist:
 *       - fix object deleting
+*       - DeleteUnusedObjects() deletes obstacles from ahead - fixed
 *  
 *****************************************************************************/
 public class ObjectSpawner : MonoBehaviour
@@ -72,8 +75,7 @@ public class ObjectSpawner : MonoBehaviour
     /// <param name="_isStartingTemplate">Starting template only spawns a template with no obstacles</param>
     public void SpawnTemplate(Vector3 _spawnPosition, Quaternion _spawnRotation, Vector3 _groundScale, Vector3 _wallScale, Color32 _groundColor, Color32 _wallColor, bool _isStartingTemplate)
     {
-        //Clear obstaclelist
-        m_currentObstacleList.Clear();
+
         m_currentTemplateGO = Instantiate(templatePrefabGO, _spawnPosition, _spawnRotation);
         //Update GO values
         //name
@@ -131,21 +133,10 @@ public class ObjectSpawner : MonoBehaviour
         TemplateWithObstacles templateWithObstacles = new TemplateWithObstacles(m_currentTemplateGO, m_currentObstacleList);
         //Adding the object to the list
         m_pcgObjectsList.Add(templateWithObstacles);
-        string debugstring = "";
-        for (int i = 0; i < m_pcgObjectsList.Count; i++)
-        {
-            string debug_template = m_pcgObjectsList[i].GetTemplateGO().gameObject.name;
-            debugstring += "Template[" + i + "] GO is: '" + debug_template + "' and contains a total of " + m_pcgObjectsList[i].GetObstacleList().Count + " values: ";
-            for (int j = 0; j < m_pcgObjectsList[i].GetObstacleList().Count; j++)
-            {
-                string debug_obstacle = m_pcgObjectsList[i].GetObstacleList()[j].gameObject.name;
-                debugstring += "Obstacle[" + j + "] is: '" + debug_obstacle + "'";
-            }
-            debugstring += "\n";
-        }
-        Debug.Log(debugstring);
         //reset obstacle counter
         m_obstacleCounter = 0;
+        //Clear obstaclelist
+        m_currentObstacleList.Clear();
     }
 
     /// <summary>
@@ -164,11 +155,15 @@ public class ObjectSpawner : MonoBehaviour
             GameObject template_go = temp_with_obstacles_to_check.GetTemplateGO();
             if (template_go.transform.position.z + template_go.transform.GetChild(0).GetChild(0).localScale.z/2 < _playerPosZ)
             {
+                //Debug.Log("playerPos: " + _playerPosZ + " template pos scale: " + template_go.transform.position.z + template_go.transform.GetChild(0).GetChild(0).localScale.z / 2);
+                //Debug.Log("ElementAt 0: " + m_pcgObjectsList.ElementAt(0).GetTemplateGO().name + m_pcgObjectsList.ElementAt(0).GetObstacleList());
+                //Debug.Log("destroying: " + template_go.gameObject.name);
                 //Delete template
                 Destroy(temp_with_obstacles_to_check.GetTemplateGO().gameObject);
                 //Delete obstacles
                 foreach (var item in temp_with_obstacles_to_check.GetObstacleList())
                 {
+                    //Debug.Log("destroying: " + item.gameObject.name);
                     Destroy(item.gameObject);
                 }
                 //remove from list
@@ -185,6 +180,22 @@ public class ObjectSpawner : MonoBehaviour
 
     }
 
+    private void DebugList()
+    {
+        string debugstring = "";
+        for (int i = 0; i < m_pcgObjectsList.Count; i++)
+        {
+            string debug_template = m_pcgObjectsList[i].GetTemplateGO().gameObject.name;
+            debugstring += "Template[" + i + "] GO is: '" + debug_template + "' and contains a total of " + m_pcgObjectsList[i].GetObstacleList().Count + " values: ";
+            for (int j = 0; j < m_pcgObjectsList[i].GetObstacleList().Count; j++)
+            {
+                string debug_obstacle = m_pcgObjectsList[i].GetObstacleList()[j].gameObject.name;
+                debugstring += "Obstacle[" + j + "] is: '" + debug_obstacle + "'";
+            }
+            debugstring += "\n";
+        }
+        Debug.Log(debugstring);
+    }
     public List<TemplateWithObstacles> GetAllPCGObjects() { return m_pcgObjectsList;}
     public GameObject[] GetObstaclePrefabsArr() { return m_obstaclePrefabsGOArr; }
 }

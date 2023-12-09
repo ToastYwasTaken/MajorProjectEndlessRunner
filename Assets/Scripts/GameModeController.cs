@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.RestService;
+using System.ComponentModel;
 using UnityEngine;
 /******************************************************************************
 * Project: MajorProjectEndlessRunner
@@ -56,7 +56,7 @@ public class GameModeController : MonoBehaviour
     private GameObject playerGO;
     //Threshold describing the speed needed to switch to higher difficulty
 
-    [SerializeField, ReadOnly]
+    [SerializeField]
     private GameModes m_currentGameMode;
     private GameModes m_nextGameMode;
     private bool m_gameModeChanged;
