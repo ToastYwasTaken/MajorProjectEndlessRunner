@@ -45,12 +45,14 @@ using UnityEngine;
 *  27.11.2023   FM  implemented obstacle spawning, tweaked constraints and restricted spawn overlaps by raycasting
 *  03.12.2023   FM  exported obstacle spawning to ObjectSpawner.cs; adjusted functionality in here; tweaked obstacle spawn rate
 *  09.12.2023   FM  modified PCG algorithm; added defaultObstacleSpawnValue
+*  10.12.2023   FM  improved calculation of obstacle spawn pos min and max value; still have to fix the randomization
 *  
 *  TODO:
 *       - tweak constraints for Obstacle Spawning - done
 *       - fix randomization bias
 *  Buglist:
 *       - resolve accessing variables from other GO not working - resolved
+*       - obstacle spawn pos randomization spawning to cluttered around center due to faulty calculation
 *  
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
@@ -104,10 +106,6 @@ public class ProceduralGeneration : MonoBehaviour
     [SerializeField, Tooltip("Layer of colliders to check for inside the overlap box")]
     private LayerMask rayCastLayer;
     private int c_defaultObstacleSpawnValue = 2;
-    private float m_obstacleSpawnPosXMin;
-    private float m_obstacleSpawnPosXMax;
-    private float m_obstacleSpawnPosZMin;
-    private float m_obstacleSpawnPosZMax;
     private Color32 m_obstacleColor;
     #endregion
 
@@ -166,7 +164,7 @@ public class ProceduralGeneration : MonoBehaviour
         }
             //delete unused objects behind player; update list, update templateCounter
             int deleted_templates_count = m_objectSpawnerRef.DeleteUnusedObjects(m_playerPositionZ);
-            Debug.Log("deleted templates count: " + deleted_templates_count);
+            //Debug.Log("deleted templates count: " + deleted_templates_count);
             m_templateCounter -= deleted_templates_count;
     }
 
@@ -258,7 +256,7 @@ public class ProceduralGeneration : MonoBehaviour
         int max_amount_of_prefabs_to_spawn = (c_defaultObstacleSpawnValue +((int) ((m_groundScale.z - c_originalGroundScaleZ) * obstacleDensity *(1 + (int)m_currentGameMode) * 0.1f)));
         int min_amount_of_prefabs_to_spawn = max_amount_of_prefabs_to_spawn/2;  
         int random_amount_of_prefabs_to_spawn = rdm.Next(min_amount_of_prefabs_to_spawn, max_amount_of_prefabs_to_spawn);
-        Debug.Log("groundscaleZ: " + m_groundScale.z + "gameModeModifier: "+ (1 + (int)m_currentGameMode) * 0.1f + " min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
+        //Debug.Log("groundscaleZ: " + m_groundScale.z + "gameModeModifier: "+ (1 + (int)m_currentGameMode) * 0.1f + " min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
         int obstacles_spawned_counter = 0;
         for (int i = 0; i < random_amount_of_prefabs_to_spawn; i++)
         {
@@ -267,22 +265,26 @@ public class ProceduralGeneration : MonoBehaviour
             //offset needed to not spawn obstacles overlapping with the wall or obstacles from another template
             float obstacle_spawn_offset = 1f;
             //Calculate spawn area
-            m_obstacleSpawnPosXMin = m_templateSpawnPosition.x - m_groundScale.x / 2 + obstacle_spawn_offset;   
-            m_obstacleSpawnPosXMax = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
-            m_obstacleSpawnPosZMin = m_templateSpawnPosition.z - m_groundScale.z / 2 + obstacle_spawn_offset;
-            m_obstacleSpawnPosZMax = m_templateSpawnPosition.z + m_groundScale.z / 2 - obstacle_spawn_offset;
-            Vector3 obstacle_spawn_position;
+            float obstacle_spawn_pos_x_min = m_templateSpawnPosition.x - m_groundScale.x / 2 + obstacle_spawn_offset;   
+            float obstacle_spawn_pos_x_max = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
+
+            float obstacle_spawn_pos_z_min = m_templateSpawnPosition.z;
+            float obstacle_spawn_pos_z_max = m_templateSpawnPosition.z + m_groundScale.z / 2;
+            Vector3 obstacle_spawn_pos;
             bool spawned_successfully = false;
             int break_value = 100;
             int attempts = 0;
             while (!spawned_successfully && attempts < break_value)
             {
             //Randomize spawn positions
-            obstacle_spawn_position = new Vector3((float)(rdm.NextDouble() * (m_obstacleSpawnPosXMax -m_obstacleSpawnPosXMin) + m_obstacleSpawnPosXMin), m_distanceToGround, (float)(rdm.NextDouble() * (m_obstacleSpawnPosZMax - m_obstacleSpawnPosZMin) + m_obstacleSpawnPosZMin));
+            float obstacle_spawn_pos_x = 0;
+            float obstacle_spawn_pos_z = 0;
+
+            obstacle_spawn_pos = new Vector3( obstacle_spawn_pos_x, m_distanceToGround, obstacle_spawn_pos_z);
 
             //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
             RaycastHit hit;
-                if(Physics.Raycast(obstacle_spawn_position, Vector3.down, out hit, m_groundScale.z))
+                if(Physics.Raycast(obstacle_spawn_pos, Vector3.down, out hit, m_groundScale.z))
                 {
                     Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
                     Collider[] hit_colliders = new Collider[1];
@@ -291,8 +293,9 @@ public class ProceduralGeneration : MonoBehaviour
                     //No overlaps found -> instantiate the obstacle
                     if (colliders_found == 0)
                     {
-                      //Spawn Obstacle
-                       m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_position, Quaternion.identity, m_obstacleColor, random_prefab_nr);
+                        //Debug.Log("Min: " + m_obstacleSpawnPosZMin + " max: " + m_obstacleSpawnPosZMax + " Spawn Pos: " + obstacle_spawn_position);
+                        //Spawn Obstacle
+                        m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_pos, Quaternion.identity, m_obstacleColor, random_prefab_nr);
                        obstacles_spawned_counter++;
                         spawned_successfully = true;
                     }
