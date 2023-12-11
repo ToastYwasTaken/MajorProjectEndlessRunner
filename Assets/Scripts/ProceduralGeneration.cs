@@ -268,7 +268,7 @@ public class ProceduralGeneration : MonoBehaviour
             float obstacle_spawn_pos_x_min = m_templateSpawnPosition.x - m_groundScale.x / 2 + obstacle_spawn_offset;   
             float obstacle_spawn_pos_x_max = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
 
-            float obstacle_spawn_pos_z_min = m_templateSpawnPosition.z;
+            float obstacle_spawn_pos_z_min = m_templateSpawnPosition.z - m_groundScale.z / 2;
             float obstacle_spawn_pos_z_max = m_templateSpawnPosition.z + m_groundScale.z / 2;
             Vector3 obstacle_spawn_pos;
             bool spawned_successfully = false;
@@ -276,31 +276,34 @@ public class ProceduralGeneration : MonoBehaviour
             int attempts = 0;
             while (!spawned_successfully && attempts < break_value)
             {
-            //Randomize spawn positions
-            float obstacle_spawn_pos_x = 0;
-            float obstacle_spawn_pos_z = 0;
+                //Randomize spawn positions - different algorithm is needed for higher ranges of floats
+                float midpoint = obstacle_spawn_pos_z_max / 2 + obstacle_spawn_pos_z_min / 2;
+                float half_range = obstacle_spawn_pos_z_max / 2 - obstacle_spawn_pos_z_min / 2;
+                int plus_minus = rdm.Next(0, 1) == 1 ? 1 : -1;
+                float obstacle_spawn_pos_x = (float)(rdm.NextDouble()*(obstacle_spawn_pos_x_max - obstacle_spawn_pos_x_min) + obstacle_spawn_pos_x_min);
+                float obstacle_spawn_pos_z = (float)(rdm.NextDouble() * (obstacle_spawn_pos_z_max - obstacle_spawn_pos_z_min) + obstacle_spawn_pos_z_min);
+                obstacle_spawn_pos = new Vector3( obstacle_spawn_pos_x, m_distanceToGround, obstacle_spawn_pos_z);
+            
 
-            obstacle_spawn_pos = new Vector3( obstacle_spawn_pos_x, m_distanceToGround, obstacle_spawn_pos_z);
-
-            //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
-            RaycastHit hit;
-                if(Physics.Raycast(obstacle_spawn_pos, Vector3.down, out hit, m_groundScale.z))
-                {
-                    Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                    Collider[] hit_colliders = new Collider[1];
-                    int colliders_found = Physics.OverlapBoxNonAlloc(hit.point, overlapBoxScale, hit_colliders, rotation, rayCastLayer);
-                
-                    //No overlaps found -> instantiate the obstacle
-                    if (colliders_found == 0)
+                //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
+                RaycastHit hit;
+                    if(Physics.Raycast(obstacle_spawn_pos, Vector3.down, out hit, m_groundScale.z))
                     {
-                        //Debug.Log("Min: " + m_obstacleSpawnPosZMin + " max: " + m_obstacleSpawnPosZMax + " Spawn Pos: " + obstacle_spawn_position);
-                        //Spawn Obstacle
-                        m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_pos, Quaternion.identity, m_obstacleColor, random_prefab_nr);
-                       obstacles_spawned_counter++;
-                        spawned_successfully = true;
+                        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                        Collider[] hit_colliders = new Collider[1];
+                        int colliders_found = Physics.OverlapBoxNonAlloc(hit.point, overlapBoxScale, hit_colliders, rotation, rayCastLayer);
+                
+                        //No overlaps found -> instantiate the obstacle
+                        if (colliders_found == 0)
+                        {
+                            //Spawn Obstacle
+                            m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_pos, Quaternion.identity, m_obstacleColor, random_prefab_nr);
+                            Debug.Log(" Z Min: " + obstacle_spawn_pos_z_min + " Z max: " + obstacle_spawn_pos_z_max + " actual spawn pos Z: " + obstacle_spawn_pos_z + " SPAWNED");
+                            obstacles_spawned_counter++;
+                            spawned_successfully = true;
+                        }else Debug.Log(" Z Min: " + obstacle_spawn_pos_z_min + " Z max: " + obstacle_spawn_pos_z_max + " actual spawn pos Z: " + obstacle_spawn_pos_z + " IGNORED");
                     }
-                }
-                attempts++;
+                    attempts++;
             }
         }
             //Debug.Log("Actually spawned: " + obstaclesSpawnedCounter + " obstacles");
