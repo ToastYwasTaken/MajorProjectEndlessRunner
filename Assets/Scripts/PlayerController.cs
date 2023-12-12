@@ -29,6 +29,7 @@ using UnityEngine;
  *  24.11.2023   FM  removed reference to ProceduralGeneration as of now; added tooltips
  *  27.11.2023   FM  minor changes
  *  05.12.2023   FM  added gameover checks on colliders
+ *  12.12.2023   FM  changed speed values in inspector
  *  
  *  TODO: 
  *      - Implement colliders switching GameModes - done

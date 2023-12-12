@@ -28,6 +28,7 @@ using UnityEngine;
 *                   removed event based system since it didn't work as intended
 *  26.11.2023   FM  moved GameMode check
 *  05.12.2023   FM  added SetCurrentGameMode()
+*  12.12.2023   FM  changed threshold values in inspector
 *  
 *  TODO: 
 *      - 

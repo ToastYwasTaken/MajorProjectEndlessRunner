@@ -46,13 +46,16 @@ using UnityEngine;
 *  03.12.2023   FM  exported obstacle spawning to ObjectSpawner.cs; adjusted functionality in here; tweaked obstacle spawn rate
 *  09.12.2023   FM  modified PCG algorithm; added defaultObstacleSpawnValue
 *  10.12.2023   FM  improved calculation of obstacle spawn pos min and max value; still have to fix the randomization
+*  12.12.2023   FM  improved spawn pos calculation by adding another OverlapSphere to avoid nearby obstacle spawning, removed alternative calculation for obstacle spawn pos randomization
 *  
 *  TODO:
 *       - tweak constraints for Obstacle Spawning - done
-*       - fix randomization bias
+*       - fix randomization bias - done
+*       - export some functionality in CalculateRandomObstacles() to clean up code
+*       - tweak obstacle counter
 *  Buglist:
 *       - resolve accessing variables from other GO not working - resolved
-*       - obstacle spawn pos randomization spawning to cluttered around center due to faulty calculation
+*       - obstacle spawn pos randomization spawning to cluttered around center due to faulty calculation - done
 *  
 *****************************************************************************/
 public class ProceduralGeneration : MonoBehaviour 
@@ -101,8 +104,10 @@ public class ProceduralGeneration : MonoBehaviour
     #region Obstacle Variables
     [SerializeField, Range(0.1f,1f), Tooltip("Manually controlled density of random obstacles to spawn")]
     private float obstacleDensity;
-    [SerializeField, Tooltip("Size of box to check for colliders with raycast")]
+    [SerializeField, Tooltip("Size of box to check for colliders, used to avoid spawn overlaps")]
     private Vector3 overlapBoxScale;
+    [SerializeField, Tooltip("Size of box to check for colliders, used to reduce chance of 'near' spawning")]
+    private Vector3 rerollBoxScale;
     [SerializeField, Tooltip("Layer of colliders to check for inside the overlap box")]
     private LayerMask rayCastLayer;
     private int c_defaultObstacleSpawnValue = 2;
@@ -267,45 +272,56 @@ public class ProceduralGeneration : MonoBehaviour
             //Calculate spawn area
             float obstacle_spawn_pos_x_min = m_templateSpawnPosition.x - m_groundScale.x / 2 + obstacle_spawn_offset;   
             float obstacle_spawn_pos_x_max = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
-
+            //no offset needed here therefore obstacles can also spawn between templates
             float obstacle_spawn_pos_z_min = m_templateSpawnPosition.z - m_groundScale.z / 2;
             float obstacle_spawn_pos_z_max = m_templateSpawnPosition.z + m_groundScale.z / 2;
             Vector3 obstacle_spawn_pos;
             bool spawned_successfully = false;
-            int break_value = 100;
+            int break_value = 1000;
             int attempts = 0;
+
             while (!spawned_successfully && attempts < break_value)
             {
-                //Randomize spawn positions - different algorithm is needed for higher ranges of floats
-                float midpoint = obstacle_spawn_pos_z_max / 2 + obstacle_spawn_pos_z_min / 2;
-                float half_range = obstacle_spawn_pos_z_max / 2 - obstacle_spawn_pos_z_min / 2;
-                int plus_minus = rdm.Next(0, 1) == 1 ? 1 : -1;
-                float obstacle_spawn_pos_x = (float)(rdm.NextDouble()*(obstacle_spawn_pos_x_max - obstacle_spawn_pos_x_min) + obstacle_spawn_pos_x_min);
+                //Randomize spawn positions
+                float obstacle_spawn_pos_x = (float)(rdm.NextDouble() * (obstacle_spawn_pos_x_max - obstacle_spawn_pos_x_min) + obstacle_spawn_pos_x_min);
                 float obstacle_spawn_pos_z = (float)(rdm.NextDouble() * (obstacle_spawn_pos_z_max - obstacle_spawn_pos_z_min) + obstacle_spawn_pos_z_min);
-                obstacle_spawn_pos = new Vector3( obstacle_spawn_pos_x, m_distanceToGround, obstacle_spawn_pos_z);
-            
-
-                //Cast Raycast from current desired spawn position to check for overlaps with other obstacles
-                RaycastHit hit;
-                    if(Physics.Raycast(obstacle_spawn_pos, Vector3.down, out hit, m_groundScale.z))
-                    {
-                        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                        Collider[] hit_colliders = new Collider[1];
-                        int colliders_found = Physics.OverlapBoxNonAlloc(hit.point, overlapBoxScale, hit_colliders, rotation, rayCastLayer);
-                
-                        //No overlaps found -> instantiate the obstacle
-                        if (colliders_found == 0)
-                        {
-                            //Spawn Obstacle
-                            m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_pos, Quaternion.identity, m_obstacleColor, random_prefab_nr);
-                            Debug.Log(" Z Min: " + obstacle_spawn_pos_z_min + " Z max: " + obstacle_spawn_pos_z_max + " actual spawn pos Z: " + obstacle_spawn_pos_z + " SPAWNED");
-                            obstacles_spawned_counter++;
-                            spawned_successfully = true;
-                        }else Debug.Log(" Z Min: " + obstacle_spawn_pos_z_min + " Z max: " + obstacle_spawn_pos_z_max + " actual spawn pos Z: " + obstacle_spawn_pos_z + " IGNORED");
-                    }
+                obstacle_spawn_pos = new Vector3(obstacle_spawn_pos_x, m_distanceToGround, obstacle_spawn_pos_z);
+                //Reroll check
+                Vector3 box_position = obstacle_spawn_pos;
+                Collider[] hit_colliders = new Collider[1];
+                int colliders_found = Physics.OverlapBoxNonAlloc(box_position, rerollBoxScale, hit_colliders, Quaternion.identity, rayCastLayer);
+                //randomize if reroll check is successful
+                if(colliders_found != 0 && rdm.Next(0, 2) == 0)
+                {
+                    //Debug.Log("SpawnPos was rerolled due to successful collider and random value check");
                     attempts++;
+                    continue;
+                }
+                else
+                {
+                    //Overlap check
+                    hit_colliders = new Collider[1];
+                    colliders_found = Physics.OverlapBoxNonAlloc(box_position, overlapBoxScale, hit_colliders, Quaternion.identity, rayCastLayer);
+                    //No overlaps found -> instantiate the obstacle
+                    if (colliders_found == 0)
+                    {
+                        //Spawn Obstacle
+                        m_objectSpawnerRef.SpawnObstacle(obstacle_spawn_pos, Quaternion.identity, m_obstacleColor, random_prefab_nr);
+                        //Debug.Log(" Z Min: " + obstacle_spawn_pos_z_min + " Z max: " + obstacle_spawn_pos_z_max + " actual spawn pos Z: " + obstacle_spawn_pos_z + " SPAWNED");
+                        obstacles_spawned_counter++;
+                        spawned_successfully = true;
+                    }
+                    //else Debug.Log(" Z Min: " + obstacle_spawn_pos_z_min + " Z max: " + obstacle_spawn_pos_z_max + " actual spawn pos Z: " + obstacle_spawn_pos_z + " IGNORED");
+                    attempts++;
+                    Debug.Log(attempts);
+                }
             }
         }
-            //Debug.Log("Actually spawned: " + obstaclesSpawnedCounter + " obstacles");
+        //Debug.Log("Actually spawned: " + obstacles_spawned_counter + " obstacles");
+    }
+    private void OnDrawGizmos()
+    {
+        //Gizmos.color = Color.yellow;
+        //Gizmos.DrawWireCube(box_position, overlapBoxScale);
     }
 }

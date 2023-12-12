@@ -339,6 +339,7 @@ MonoBehaviour:
   renderDistance: 100
   obstacleDensity: 0.8
   overlapBoxScale: {x: 3, y: 2, z: 2}
+  rerollBoxScale: {x: 7.5, y: 2, z: 7.5}
   rayCastLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -389,12 +390,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerGO: {fileID: 540864214}
   m_currentGameMode: 0
-  speedThresholdVeryEasy: 5
-  speedThresholdEasy: 5.5
-  speedThresholdMedium: 7
-  speedThresholdHard: 9
-  speedThresholdVeryHard: 12
-  speedThresholdExtreme: 15.5
+  speedThresholdVeryEasy: 10.5
+  speedThresholdEasy: 11
+  speedThresholdMedium: 13
+  speedThresholdHard: 15
+  speedThresholdVeryHard: 18
+  speedThresholdExtreme: 20
   mySceneManagerGO: {fileID: 1860400431}
 --- !u!1 &1860400431
 GameObject:
@@ -540,6 +541,14 @@ PrefabInstance:
     - target: {fileID: 4633430967283130936, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
+      propertyPath: speedVertical
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
+      propertyPath: speedHorizontal
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
       propertyPath: gameModeControllerGO
