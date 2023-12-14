@@ -390,11 +390,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerGO: {fileID: 540864214}
   m_currentGameMode: 0
-  speedThresholdVeryEasy: 10.5
+  speedThresholdVeryEasy: 10
   speedThresholdEasy: 11
   speedThresholdMedium: 13
   speedThresholdHard: 15
-  speedThresholdVeryHard: 18
+  speedThresholdVeryHard: 17
   speedThresholdExtreme: 20
   mySceneManagerGO: {fileID: 1860400431}
 --- !u!1 &1860400431
@@ -548,7 +548,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
       propertyPath: speedHorizontal
-      value: 10
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
       propertyPath: gameModeControllerGO

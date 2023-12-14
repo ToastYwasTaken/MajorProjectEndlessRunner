@@ -33,8 +33,8 @@ using UnityEngine.VFX;
 *       - Change names from prefabs when spawning - done
 *       - Properly Debug the dictionary - done
 *  Buglist:
-*       - fix object deleting
-*       - DeleteUnusedObjects() deletes obstacles from ahead - fixed
+*       - fix object deleting - resolved
+*       - DeleteUnusedObjects() deletes obstacles from ahead - resolved
 *  
 *****************************************************************************/
 public class ObjectSpawner : MonoBehaviour
@@ -112,6 +112,13 @@ public class ObjectSpawner : MonoBehaviour
     /// <param name="_selectedPrefabID"></param>
     public void SpawnObstacle(Vector3 _spawnPosition, Quaternion _spawnRotation, Color32 _color, int _selectedPrefabID)
     {
+        //Updating prefabs to spawn accordingly
+        if (m_obstaclePrefabsGOArr[_selectedPrefabID].name == "Box")
+        {
+            Debug.Log("updating rotation");
+            _spawnRotation = Quaternion.Euler(0, 90, 0);
+            _spawnPosition += new Vector3(0, -0.5f, 0);
+        }
         GameObject current_obstacle = Instantiate(m_obstaclePrefabsGOArr[_selectedPrefabID], _spawnPosition, _spawnRotation);
         //Update GO values
         current_obstacle.name = "Obstacle("+ m_obstaclePrefabsGOArr[_selectedPrefabID].gameObject.name + ")[" + m_obstacleCounter + "]";
@@ -180,6 +187,9 @@ public class ObjectSpawner : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Only to debug the created Template-Obstacle-List
+    /// </summary>
     private void DebugList()
     {
         string debugstring = "";
@@ -201,7 +211,7 @@ public class ObjectSpawner : MonoBehaviour
 }
 
 /// <summary>
-/// Holds GameObject corresponding to 1 game tile, consisting of
+/// Holds GameObject corresponding to 1 'game tile', consisting of
 /// a template containing walls and ground, and the obstacles generated on it
 /// </summary>
 public class TemplateWithObstacles
