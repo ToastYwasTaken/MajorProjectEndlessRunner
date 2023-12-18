@@ -55,7 +55,7 @@ using UnityEngine;
 *       - fix randomization bias - done
 *       - export some functionality in CalculateRandomObstacles() to clean up code - done
 *       - tweak obstacle counter - done
-*       - add spawn rarity for obstacles - 
+*       - add spawn rarity for obstacles - OPTIONAL
 *  Buglist:
 *       - resolve accessing variables from other GO not working - resolved
 *       - obstacle spawn pos randomization spawning to cluttered around center due to faulty calculation - resolved
@@ -322,7 +322,7 @@ public class ProceduralGeneration : MonoBehaviour
                 }
             }
         }
-        Debug.Log("Actually spawned: " + obstacles_spawned_counter + " obstacles");
+        //Debug.Log("Actually spawned: " + obstacles_spawned_counter + " obstacles");
     }
 
     private Quaternion RandomizeQuaternionY()

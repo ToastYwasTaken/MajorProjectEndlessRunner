@@ -115,7 +115,7 @@ public class ObjectSpawner : MonoBehaviour
         //Updating prefabs to spawn accordingly
         if (m_obstaclePrefabsGOArr[_selectedPrefabID].name == "Box")
         {
-            Debug.Log("updating rotation");
+            //Debug.Log("updating rotation");
             _spawnRotation = Quaternion.Euler(0, 90, 0);
             _spawnPosition += new Vector3(0, -0.5f, 0);
         }

@@ -108,11 +108,11 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 4964}
     - Class: 114
-      Script: {instanceID: 5650}
+      Script: {instanceID: 5648}
     - Class: 114
-      Script: {instanceID: 5962}
+      Script: {instanceID: 5960}
     - Class: 114
-      Script: {instanceID: 6660}
+      Script: {instanceID: 6658}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -179,11 +179,11 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 4964}
     - Class: 114
-      Script: {instanceID: 5650}
+      Script: {instanceID: 5648}
     - Class: 114
-      Script: {instanceID: 5962}
+      Script: {instanceID: 5960}
     - Class: 114
-      Script: {instanceID: 6660}
+      Script: {instanceID: 6658}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -240,15 +240,15 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 4556}
     - Class: 114
-      Script: {instanceID: 5948}
+      Script: {instanceID: 5946}
     - Class: 114
-      Script: {instanceID: 5962}
+      Script: {instanceID: 5960}
     - Class: 114
-      Script: {instanceID: 6430}
+      Script: {instanceID: 6428}
     - Class: 114
-      Script: {instanceID: 6660}
+      Script: {instanceID: 6658}
     - Class: 114
-      Script: {instanceID: 7362}
+      Script: {instanceID: 7360}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 136
@@ -1076,7 +1076,7 @@ ScriptsOnlyBuild:
     className: TMP_ScrollbarEventHandler
   - hash:
       serializedVersion: 2
-      Hash: 05783216a4db0e8bda20fdfdcc5e4996
+      Hash: 4a94d595d19ee8736911b9f4e58a3e29
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: ProceduralGeneration
@@ -1121,4 +1121,4 @@ ScriptsOnlyBuild:
   - Assets/Scenes/MainMenu.unity
   - Assets/Scenes/PlayMode.unity
   - Assets/Scenes/GameOver.unity
-  playerPath: C:/Users/x79/Documents/GitHub/MajorProjectEndlessRunner/Build/My project.exe
+  playerPath: C:/Users/x79/Documents/GitHub/MajorProjectEndlessRunner/Build2/My project.exe

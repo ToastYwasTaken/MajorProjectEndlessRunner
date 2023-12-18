@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using LitJson;
 using Unity.VisualScripting;
 using UnityEngine;
 /******************************************************************************
@@ -23,13 +24,15 @@ using UnityEngine;
  *  18.08.2023   FM  created
  *  14.09.2023   FM  removed unnecessary parts
  *  06.10.2023   FM  added horizontal continous movement, adjusted values, added seperated acceleration and speed variables
- *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug                   where Rigidbody speed was accidentally overwritten
+ *  12.11.2023   FM  adjusted Variables identifiers and names to fulfill coding conventions (see CodingConventions.txt), added manual calculation of gravity, fixed bug                   
+ *                   where Rigidbody speed was accidentally overwritten
  *  21.11.2023   FM  added null check
  *  22.11.2023   FM  added getter
  *  24.11.2023   FM  removed reference to ProceduralGeneration as of now; added tooltips
  *  27.11.2023   FM  minor changes
  *  05.12.2023   FM  added gameover checks on colliders
  *  12.12.2023   FM  changed speed values in inspector
+ *  18.12.2023   FM  added saving and loading for speedmodifier
  *  
  *  TODO: 
  *      - Implement colliders switching GameModes - done
@@ -39,7 +42,7 @@ using UnityEngine;
  *      - Player sticking to the wall when holding left or right respectively
  *  
  *****************************************************************************/
-public class PlayerController : MonoBehaviour
+public class PlayerController : SaveableBehavior
 {
     [SerializeField]
     private GameObject gameModeControllerGO;
@@ -68,6 +71,53 @@ public class PlayerController : MonoBehaviour
     private Vector3 m_keyInput;
 
     public static PlayerController Instance { get; private set; }
+    #region Data Saving
+    private const string c_speedmodifierKey = "speedmodifier";
+
+    /// <summary>
+    /// Serializes objects to JsonData
+    /// </summary>
+    /// <param name="_obj">object to convert</param>
+    /// <returns>JsonData result</returns>
+    //private JsonData SerializeValue(object _obj) 
+    //{
+    //    return JsonMapper.ToObject(JsonUtility.ToJson(_obj));
+    //}
+    /// <summary>
+    /// Deserializes JsonData into desired objects of type T
+    /// </summary>
+    /// <typeparam name="T">target type</typeparam>
+    /// <param name="_data">input data</param>
+    /// <returns>T result</returns>
+    private T DeserializeValue<T>(JsonData _data)
+    {
+        return JsonUtility.FromJson<T>(_data.ToJson());
+    }
+
+    /// <summary>
+    /// Save Data here
+    /// </summary>
+    public override JsonData SavedData
+    {
+        get
+        {
+            var result = new JsonData();
+            result[c_speedmodifierKey] = speedModifier; //Serialize here later
+            return result;
+        }
+    }
+    /// <summary>
+    /// Loads data here
+    /// </summary>
+    /// <param name="data">data to load</param>
+    public override void LoadFromData(JsonData data)
+    {
+        if (data.ContainsKey(c_speedmodifierKey))
+        {
+            speedModifier = DeserializeValue<float>(data[c_speedmodifierKey]); 
+        }
+    }
+    #endregion
 
     private void Awake()
     {
@@ -173,5 +223,7 @@ public class PlayerController : MonoBehaviour
     {
         return this.transform.position;
     }
+
+
 }
 

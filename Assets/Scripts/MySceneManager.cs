@@ -44,9 +44,11 @@ public class MySceneManager : MonoBehaviour
     public void LoadPlayMode()
     {
         SceneManager.LoadScene("PlayMode");
+        GameDataManager.LoadPlayerStats("SaveFile.json");
     }
     public void LoadGameOver()
     {
+        GameDataManager.SavePlayerStats("SaveFile.json");
         SceneManager.LoadScene("GameOver");
     }
     public void LoadMainMenu()
