@@ -62,6 +62,7 @@
     <Compile Include="Assets\Scripts\GameModeController.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonMockWrapper.cs" />
     <Compile Include="Assets\Scripts\ProceduralGeneration.cs" />
+    <Compile Include="Assets\Scripts\MapperHelper.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonWriter.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonData.cs" />
     <Compile Include="Assets\Scripts\GameDataManager.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="Assets\LitJson\LitJson\JsonMapper.cs" />
     <Compile Include="Assets\LitJson\LitJson\ParserToken.cs" />
     <Compile Include="Assets\LitJson\LitJson\Netstandard15Polyfill.cs" />
+    <Compile Include="Assets\Scripts\DynamicDifficultyAdjuster.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

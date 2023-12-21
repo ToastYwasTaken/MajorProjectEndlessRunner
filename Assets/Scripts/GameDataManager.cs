@@ -42,9 +42,13 @@ public static class GameDataManager
     private const string c_objectsKey = "objects";
     private const string c_saveID = "$saveID";
     static UnityAction<Scene, LoadSceneMode>
-    LoadObjectsAfterSceneLoad;
+    ALoadObjectsAfterSceneLoad;
 
-    public static void SavePlayerStats(string _fileName)
+    /// <summary>
+    /// Saves Player data to .json file
+    /// </summary>
+    /// <param name="_fileName">name of file to save</param>
+    public static void SaveStats(string _fileName)
     {
         JsonData final_json_data = new JsonData();
         //locate all Savable classes in scene
@@ -59,8 +63,6 @@ public static class GameDataManager
                 var data = saveable_object.SavedData;
                 data[c_saveID] = saveable_object.SaveID;
                 saved_objects.Add(data);
-
-
             }
             final_json_data[c_objectsKey] = saved_objects;
         }
@@ -78,9 +80,14 @@ public static class GameDataManager
         System.GC.Collect();
     }
 
-    public static bool LoadPlayerStats(string _fileName)
+    /// <summary>
+    /// Loads previously saved data
+    /// </summary>
+    /// <param name="_fileName">name of file to load</param>
+    /// <returns>true if loaded successfully</returns>
+    public static bool LoadStats(string _fileName)
     {
-        Debug.Log("Trying to load player stats");
+        //Debug.Log("Trying to load player stats");
         var path = Path.Combine(Application.persistentDataPath, _fileName);
         if (File.Exists(path))
         {
@@ -90,9 +97,44 @@ public static class GameDataManager
             {
                 if (data.ContainsKey(c_objectsKey))
                 {
+                    //Get objects
                     var objects = data[c_objectsKey];
+                    //Create delegate
+                    ALoadObjectsAfterSceneLoad = (scene, loadSceneMode) =>
+                    {
+                        // Find all loadable objects implementing ISavable
+                        var allLoadableObjects = Object
+                            .FindObjectsOfType<MonoBehaviour>()
+                            .OfType<ISaveable>()
+                            .ToDictionary(o => o.SaveID, o => o);
+                        // Get the collection of objects we need to load
+                        var objectsCount = objects.Count;
+                        for (int i = 0; i < objectsCount; i++)
+                        {
+                            // Get saved data of objects
+                            var objectData = objects[i];
+                            // Get the Save ID
+                            var saveID = (string)objectData[c_saveID];
+                            // Find loadable objects by saveID
+                            if (allLoadableObjects.ContainsKey(saveID))
+                            {
+                                var loadableObject = allLoadableObjects[saveID];
+                                //Load object data
+                                Debug.Log("Loading object data");
+                                loadableObject.LoadFromData(objectData);
+                            }
+                        }
+                        //Remove delegate
+                        SceneManager.sceneLoaded -= ALoadObjectsAfterSceneLoad;
+                        // Remove ref
+                        ALoadObjectsAfterSceneLoad = null;
+                        //Run GC to clear alloc memory
+                        System.GC.Collect();
+                    };
+                    // Register the object-loading code to run after the scene loads.
+                    SceneManager.sceneLoaded += ALoadObjectsAfterSceneLoad;
                 }
-                Debug.Log("Player stats loaded successfully");
+                //Debug.Log("Player stats loaded successfully");
                 return true;
             }
             else return false;
@@ -101,6 +143,10 @@ public static class GameDataManager
     }
 }
 
+/// <summary>
+/// A savable variation of MonoBehaviour
+/// The abstract class only assigns a new unique save ID
+/// </summary>
 public abstract class SaveableBehavior : MonoBehaviour, ISaveable, ISerializationCallbackReceiver 
 {
     public abstract JsonData SavedData { get; }
@@ -110,25 +156,24 @@ public abstract class SaveableBehavior : MonoBehaviour, ISaveable, ISerializatio
     {
         get
         {
-            return _saveID;
+            return saveID;
         }
         set
         {
-            _saveID = value;
+            saveID = value;
         }
     }
 
     [HideInInspector]
     [SerializeField]
-    private string _saveID;
+    private string saveID;
 
     public void OnBeforeSerialize()
     {
-        if (_saveID == null)
+        if (saveID == null)
         {
-            _saveID = System.Guid.NewGuid().ToString();
+            saveID = System.Guid.NewGuid().ToString();
         }
-
     }
 
     public void OnAfterDeserialize()
@@ -137,6 +182,9 @@ public abstract class SaveableBehavior : MonoBehaviour, ISaveable, ISerializatio
     }
 }
 
+/// <summary>
+/// Implemented by SavableBehaviour
+/// </summary>
 internal interface ISaveable
 {
     public string SaveID { get; }

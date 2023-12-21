@@ -69,7 +69,7 @@ public class ProceduralGeneration : MonoBehaviour
     [SerializeField, Tooltip("GameModeController GameObject in game scene, gets assigned in Awake() if unassigned")]
     private GameObject gameModeControllerGO;
     private GameModeController m_gameModeControllerRef;
-    private GameModes m_currentGameMode;
+    private EGameModes m_currentGameMode;
     #endregion
 
     #region Player Variables
@@ -160,7 +160,7 @@ public class ProceduralGeneration : MonoBehaviour
         }
         //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + " playerPosZ: " + m_playerPositionZ);
         //Update playerPos and renderdistance relative to player position
-        m_playerPositionZ = m_playerControllerRef.GetPlayerPosition().z;
+        m_playerPositionZ = m_playerControllerRef.playerPosition.z;
         var render_distance_relative = m_playerPositionZ + renderDistance;
         if(m_templateSpawnPosition.z < render_distance_relative)
         {
@@ -187,31 +187,31 @@ public class ProceduralGeneration : MonoBehaviour
     {
         //Set colors according to game mode
         //They stay the same for START and VERY_EASY
-        if (m_currentGameMode == GameModes.EASY)
+        if (m_currentGameMode == EGameModes.EASY)
         {
             //Debug.Log("Swapped color for GM: " + m_currentGameMode);
             m_groundColor = new Color32(0, 255, 250, 255);
             m_wallColor = new Color32(10, 125, 120, 255);
         }
-        else if (m_currentGameMode == GameModes.MEDIUM)
+        else if (m_currentGameMode == EGameModes.MEDIUM)
         {
             //Debug.Log("Swapped color for GM: " + m_currentGameMode);
             m_groundColor = new Color32(10, 25, 240, 255);
             m_wallColor = new Color32(10, 15, 105, 255);
         }
-        else if (m_currentGameMode == GameModes.HARD)
+        else if (m_currentGameMode == EGameModes.HARD)
         {
             //Debug.Log("Swapped color for GM: " + m_currentGameMode);
             m_groundColor = new Color32(255, 155, 0, 255);
             m_wallColor = new Color32(155, 95, 10, 255);
         }
-        else if(m_currentGameMode == GameModes.VERY_HARD)
+        else if(m_currentGameMode == EGameModes.VERY_HARD)
         {
             //Debug.Log("Swapped color for GM: " + m_currentGameMode);
             m_groundColor = new Color32(255, 0, 0, 255);
             m_wallColor = new Color32(115, 5, 5, 255);
         }
-        else if(m_currentGameMode == GameModes.EXTREME)
+        else if(m_currentGameMode == EGameModes.EXTREME)
         {
             //Debug.Log("Swapped color for GM: " + m_currentGameMode);
             m_groundColor = new Color32(255, 0, 255, 255);
@@ -249,7 +249,7 @@ public class ProceduralGeneration : MonoBehaviour
         //Increasing the size increase for future spawns to counter shorter sections in higher speeds, randomize the increment
         System.Random rdm = new System.Random();
         //Calculate ground size increase
-        int player_speed_rounded = (int)m_playerControllerRef.GetVerticalSpeed();
+        int player_speed_rounded = (int)m_playerControllerRef.speedVertical;
         int min_ground_size_increase = player_speed_rounded / 2;
         m_groundSizeIncrease = rdm.Next(min_ground_size_increase,player_speed_rounded);
         m_templateCounter++;
@@ -264,7 +264,8 @@ public class ProceduralGeneration : MonoBehaviour
         System.Random rdm = new System.Random();
         //Calculate range
         int max_amount_of_prefabs_to_spawn = CalculateObstacleMaxSpawnAmount();
-        (int,int) amount_of_prefabs_to_spawn_range_mapped = MapObstacleSpawnRange(c_minObstacleAmount, max_amount_of_prefabs_to_spawn, c_minRequiredRangeToMap);
+        //Remap the "big" range to a smaller range to narrow randomization range
+        (int,int) amount_of_prefabs_to_spawn_range_mapped = MapperHelper.RemapRange(c_minObstacleAmount, max_amount_of_prefabs_to_spawn, 0.4f, c_minRequiredRangeToMap);
         //Randomize range
         int random_amount_of_prefabs_to_spawn = rdm.Next(amount_of_prefabs_to_spawn_range_mapped.Item1, amount_of_prefabs_to_spawn_range_mapped.Item2);
         //Debug.Log("groundscaleZ: " + m_groundScale.z + "gameModeModifier: "+ (1 + (int)m_currentGameMode) * 0.1f + " min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
@@ -274,7 +275,7 @@ public class ProceduralGeneration : MonoBehaviour
             //Choose random obstacle prefab
             int random_prefab_nr = rdm.Next(0, m_objectSpawnerRef.GetObstaclePrefabsArr().Length);
             //offset needed to not spawn obstacles overlapping with the wall or obstacles from another template
-            float obstacle_spawn_offset = 1f;
+            float obstacle_spawn_offset = 1.5f;
             //Calculate spawn area
             float obstacle_spawn_pos_x_min = m_templateSpawnPosition.x - m_groundScale.x / 2 + obstacle_spawn_offset;   
             float obstacle_spawn_pos_x_max = m_templateSpawnPosition.x + m_groundScale.x / 2 - obstacle_spawn_offset;
@@ -347,27 +348,6 @@ public class ProceduralGeneration : MonoBehaviour
         int prefab_amount_max = c_defaultObstacleSpawnValue + ((int)((m_groundScale.z - c_originalGroundScaleZ)
             * obstacleDensity * (1 + (int)m_currentGameMode) * 0.1f));
         return prefab_amount_max;
-    }
-
-    /// <summary>
-    /// returns a remapped, smaller range to gain more controll over the randomization by narrowing the desired target range
-    /// min is set fixed to 1 so it always spawns AT LEAST 1 obstacle (besides on starting template)
-    /// </summary>
-    /// <param name="_min">unmapped min value</param>
-    /// <param name="_max">unmapped max value</param>
-    /// <param name="_minRequiredRangeToMap">minimal range required to start remapping values</param>
-    /// <returns>mapped new min and max value</returns>
-    private (int, int) MapObstacleSpawnRange(int _min, int _max, int _minRequiredRangeToMap)
-    {
-        int difference_min_max = _max - _min;
-        if(difference_min_max >= _minRequiredRangeToMap)    
-        {
-            int factor = (int)(difference_min_max * 0.4f);  
-            int mapped_min = _min +  factor;   
-            int mapped_max = _max - factor;
-            return (mapped_min, mapped_max);                
-        }
-        else return (_min, _max);
     }
 
     /// <summary>

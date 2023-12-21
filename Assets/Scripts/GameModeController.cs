@@ -37,7 +37,7 @@ using UnityEngine;
 *      - correct playerspeed check for game mode change - resolved
 *      
 *****************************************************************************/
-public enum GameModes
+public enum EGameModes
 {
     GAMEOVER = -1,
     START = 0,  //Switching from START to VERY_EASY does NOT change prefabs in ProceduralGeneration.cs
@@ -58,8 +58,8 @@ public class GameModeController : MonoBehaviour
     //Threshold describing the speed needed to switch to higher difficulty
 
     [SerializeField]
-    private GameModes m_currentGameMode;
-    private GameModes m_nextGameMode;
+    private EGameModes m_currentGameMode;
+    private EGameModes m_nextGameMode;
     private bool m_gameModeChanged;
 
     [SerializeField, Tooltip("Threshold to be hit to enter VeryEasy Mode (This should be active from the start)")]
@@ -99,12 +99,12 @@ public class GameModeController : MonoBehaviour
     }
     private void Start()
     {
-        m_currentGameMode = GameModes.START;
-        m_nextGameMode = GameModes.VERY_EASY;
+        m_currentGameMode = EGameModes.START;
+        m_nextGameMode = EGameModes.VERY_EASY;
     }
     private void Update()
     {
-        m_playerSpeed = m_playerControllerRef.GetVerticalSpeed();
+        m_playerSpeed = m_playerControllerRef.speedVertical;
         UpdateGameMode();
         //Update nextGameMode
         if (m_nextGameMode == m_currentGameMode)
@@ -113,8 +113,8 @@ public class GameModeController : MonoBehaviour
             m_gameModeChanged = true;
             m_nextGameMode++;
         }
-        //Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
-        if (m_currentGameMode == GameModes.GAMEOVER)
+        Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
+        if (m_currentGameMode == EGameModes.GAMEOVER)
         {
             m_mySceneManagerRef.LoadGameOver();
         }
@@ -130,38 +130,37 @@ public class GameModeController : MonoBehaviour
         //Debug.Log(playerSpeedRounded + "   " + speedThresholdVeryEasy);
         if (playerSpeedRounded == speedThresholdVeryEasy)
         {
-            m_currentGameMode = GameModes.VERY_EASY;
+            m_currentGameMode = EGameModes.VERY_EASY;
             Debug.Log("Hit very easy speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdEasy)
         {
-            m_currentGameMode = GameModes.EASY;
+            m_currentGameMode = EGameModes.EASY;
             Debug.Log("Hit easy speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdMedium)
         {
-            m_currentGameMode = GameModes.MEDIUM;
+            m_currentGameMode = EGameModes.MEDIUM;
             Debug.Log("Hit medium speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdHard)
         {
-            m_currentGameMode = GameModes.HARD;
+            m_currentGameMode = EGameModes.HARD;
             Debug.Log("Hit hard speed threshold");
         }
         else if (playerSpeedRounded == speedThresholdVeryHard)
         {
-            m_currentGameMode = GameModes.VERY_HARD;
+            m_currentGameMode = EGameModes.VERY_HARD;
             Debug.Log("Hit very hard speed threshold");
         }
         else if(playerSpeedRounded == speedThresholdExtreme)
         {
-            m_currentGameMode = GameModes.EXTREME;
+            m_currentGameMode = EGameModes.EXTREME;
             Debug.Log("Hit extreme speed threshold");
         }
-
     }
 
-    public GameModes GetCurrentGameMode()
+    public EGameModes GetCurrentGameMode()
     {
         return m_currentGameMode;
     }
@@ -174,7 +173,7 @@ public class GameModeController : MonoBehaviour
         m_gameModeChanged = _value;
     }
 
-    public void SetCurrentGameMode(GameModes _gameMode)
+    public void SetCurrentGameMode(EGameModes _gameMode)
     {
         m_currentGameMode = _gameMode;
     }

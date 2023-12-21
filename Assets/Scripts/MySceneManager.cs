@@ -18,6 +18,7 @@ using UnityEngine.SceneManagement;
 * ----------------------------
 * ChangeLog:
 *  05.12.2023   FM  created; added Load functions for different scenes
+*  18.12.2023   FM  added GameDataManager references to save and load data
 *  
 *  TODO: 
 *      - 
@@ -43,12 +44,12 @@ public class MySceneManager : MonoBehaviour
 
     public void LoadPlayMode()
     {
+        GameDataManager.LoadStats("SaveFile.json");
         SceneManager.LoadScene("PlayMode");
-        GameDataManager.LoadPlayerStats("SaveFile.json");
     }
     public void LoadGameOver()
     {
-        GameDataManager.SavePlayerStats("SaveFile.json");
+        GameDataManager.SaveStats("SaveFile.json");
         SceneManager.LoadScene("GameOver");
     }
     public void LoadMainMenu()
