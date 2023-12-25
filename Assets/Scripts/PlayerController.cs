@@ -33,6 +33,8 @@ using UnityEngine;
  *  19.12.2023   FM  minor changes
  *  21.12.2023   FM  Updated getters / setters; fixed implementation of SavableBehaviour by correcting 
  *                   deserialization of JsonData objects; removed SerializeValue() and DeserializeValue()
+ *  22.12.2023   FM  Fixed getters / setters causing issues
+ *  
  *                  
  *  TODO: 
  *      - Implement colliders switching GameModes - done
@@ -45,22 +47,25 @@ using UnityEngine;
  *****************************************************************************/
 public class PlayerController : SaveableBehavior
 {
- 
     [SerializeField]
     private GameObject gameModeControllerGO;
     [SerializeField, Tooltip("Speed moving left and right, depending on player input")]
-    private float speedHorizontal = 5f; 
+    private float speedHorizontal = 9f; 
     [SerializeField, Tooltip("Jump / falling velocity applied to the rb")]
     private float rbVelocityY; 
     [SerializeField, Tooltip("Bool for jumping behavior")]
     private bool isGrounded;   
     [SerializeField, Tooltip("Scales gravity to accellerate player fall speed")]
     private Vector3 scaledGravityVector;
-
-    [Tooltip("player position")]
+    /// <summary>
+    /// 
+    /// </summary>
+    [Tooltip("Player position")]
     public Vector3 playerPosition { get { return m_playerPosition; } set { m_playerPosition = value; } }
+    private Vector3 m_playerPosition;
     [Tooltip("Speed moving forward")]
-    public float speedVertical { get { return m_verticalSpeed; } set { m_verticalSpeed = value; } }
+    public float speedVertical { get { return m_speedVertical; } set { m_speedVertical = value; } }
+    private float m_speedVertical = 9f;
 
     #region constants
     private const float c_jumpForce = 10f;    //jump force multiplier
@@ -72,14 +77,15 @@ public class PlayerController : SaveableBehavior
     #endregion
 
     #region DDA 
-    private float m_distanceTravelled;
     private float m_speedModifier = 1.0f;
+    private float m_distanceTravelled;
+    private float m_distanceTravelledLoaded;
     private int m_deathCounter = 0;
+    private int m_deathCounterLoaded;
+    private float m_speedVerticalLoaded;
     #endregion
 
     #region other
-    private Vector3 m_playerPosition;
-    private float m_verticalSpeed;
     private float m_startingAccellerationHorizontal;  //accelleration moving left and right
     private Rigidbody m_rb;
     private GameModeController m_gameModeControllerRef;
@@ -88,7 +94,7 @@ public class PlayerController : SaveableBehavior
     #endregion
 
     #region Data Saving
-    private const string c_speedmodifierKey = "speedmodifier";
+    private const string c_speedVerticalKey = "speedVertical";
     private const string c_distanceTravelledKey = "distance";
     private const string c_deathCounterKey = "deathCounter";
 
@@ -100,34 +106,36 @@ public class PlayerController : SaveableBehavior
         get
         {
             var result = new JsonData();
-            result[c_speedmodifierKey] = m_speedModifier; 
+            result[c_speedVerticalKey] = m_speedVertical;
+            m_distanceTravelled = m_playerPosition.z;
             result[c_distanceTravelledKey] = m_distanceTravelled;
-            result[c_deathCounterKey] =  m_deathCounter++;  //incrementing death counter
-            Debug.Log("Saving speedMod: " + m_speedModifier + " distanceTravelled: " + m_distanceTravelled + " and deathcounter: " + m_deathCounter);
+            result[c_deathCounterKey] =  ++m_deathCounter;  //incrementing death counter
+            Debug.Log("Saving speedVertical: " + m_speedVertical + " distanceTravelled: " + m_distanceTravelled + " and deathcounter: " + m_deathCounter);
             return result;
         }
     }
     /// <summary>
     /// Loads data from previous game
+    /// additional cast needed bc sh JsonData can't directly convert to float
     /// </summary>
     /// <param name="data">data to load here</param>
     public override void LoadFromData(JsonData data)
     {
-        if (data.ContainsKey(c_speedmodifierKey))
+        if (data.ContainsKey(c_speedVerticalKey))
         {
-            m_speedModifier = (float)((double)data[c_speedmodifierKey]);
+            m_speedVerticalLoaded = (float)((double)data[c_speedVerticalKey]);
         }
         if (data.ContainsKey(c_distanceTravelledKey))
         {
-            m_distanceTravelled = (float)((double)data[c_distanceTravelledKey]);
+            m_distanceTravelledLoaded = (float)((double)data[c_distanceTravelledKey]);
         }
         if (data.ContainsKey(c_deathCounterKey))
         {
-            m_deathCounter = (int)(data[c_deathCounterKey]);
+            m_deathCounterLoaded = (int)(data[c_deathCounterKey]);
         }
-        Debug.Log("Loaded values BEFORE DDA - speedMod: " + m_speedModifier + " distanceTravelled: " + m_distanceTravelled + " deathcounter: " + m_deathCounter);
-        m_speedModifier = DynamicDifficultyAdjuster.CalculateAdjustedSpeedModifier(m_speedModifier, m_distanceTravelled, m_deathCounter);
-        Debug.Log("Loaded values AFTER DDA - speedMod: " + m_speedModifier + " distanceTravelled: " + m_distanceTravelled + " deathcounter: " + m_deathCounter);
+        Debug.Log("Loaded values BEFORE DDA - speedVert: " + m_speedVerticalLoaded + " distanceTravelled: " + m_distanceTravelledLoaded + " deathcounter: " + m_deathCounterLoaded);
+        m_speedModifier = DynamicDifficultyAdjuster.CalculateAdjustedSpeedModifier(m_speedModifier);
+        Debug.Log("Adjusted speed modifier AFTER DDA: " + m_speedModifier);
     }
     #endregion
 
@@ -157,7 +165,7 @@ public class PlayerController : SaveableBehavior
 
     void Update()
     {
-        m_distanceTravelled = transform.position.z;
+        m_playerPosition = transform.position;
         UpdatePlayerSpeed();
         PlayerFall();
         PlayerJump();
@@ -168,12 +176,12 @@ public class PlayerController : SaveableBehavior
         //Setting up keyInputs, Ignoring vertical movement inputs
         m_keyInput = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
         //Apply user input horizontal movement, continous vertical movement and jump movement
-        m_rb.velocity = new Vector3(speedHorizontal * m_keyInput.x, rbVelocityY, speedVertical);
+        m_rb.velocity = new Vector3(speedHorizontal * m_keyInput.x, rbVelocityY, m_speedVertical);
     }
 
     private void UpdatePlayerSpeed()
     {
-        speedVertical += Time.deltaTime * c_startingAccellerationVertical * m_speedModifier;
+        m_speedVertical += Time.deltaTime * c_startingAccellerationVertical * m_speedModifier;
         speedHorizontal += Time.deltaTime * m_startingAccellerationHorizontal * m_speedModifier;
     }
 
@@ -233,11 +241,9 @@ public class PlayerController : SaveableBehavior
         }
         else if (collision.gameObject.CompareTag("Obstacle"))
         {
-            m_deathCounter++;
-            m_gameModeControllerRef.SetCurrentGameMode(EGameModes.GAMEOVER);
+            m_gameModeControllerRef.currentGameMode = EGameModes.GAMEOVER;
         }
     }
-
 
 }
 

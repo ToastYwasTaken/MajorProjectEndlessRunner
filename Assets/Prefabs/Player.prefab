@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7116387897715078676}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -48,8 +48,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4892b429b29e724c9c49a2b461e330e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ProceduralGeneratorGO: {fileID: 0}
-  speedVertical: 5
+  saveID: 6fa212cd-352a-45e8-8af2-49c4d56cfd6e
+  gameModeControllerGO: {fileID: 0}
   speedHorizontal: 5
   rbVelocityY: 0
   isGrounded: 0

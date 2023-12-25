@@ -152,11 +152,11 @@ public class ProceduralGeneration : MonoBehaviour
     private void Update()
     {
         //Get GameMode related stuff
-        m_currentGameMode = m_gameModeControllerRef.GetCurrentGameMode();
-        if (m_gameModeControllerRef.GetGameModeChanged())
+        m_currentGameMode = m_gameModeControllerRef.currentGameMode;
+        if (m_gameModeControllerRef.gameModeChanged)
         {
             UpdateTemplateColor();
-            m_gameModeControllerRef.SetGameModeChanged(false);
+            m_gameModeControllerRef.gameModeChanged = false;
         }
         //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + " playerPosZ: " + m_playerPositionZ);
         //Update playerPos and renderdistance relative to player position
@@ -177,8 +177,6 @@ public class ProceduralGeneration : MonoBehaviour
             //Debug.Log("deleted templates count: " + deleted_templates_count);
             m_templateCounter -= deleted_templates_count;
     }
-
-
 
     /// <summary>
     /// Change colors of prefab on difficulty change
@@ -250,6 +248,7 @@ public class ProceduralGeneration : MonoBehaviour
         System.Random rdm = new System.Random();
         //Calculate ground size increase
         int player_speed_rounded = (int)m_playerControllerRef.speedVertical;
+        Debug.Log((int)m_playerControllerRef.speedVertical);
         int min_ground_size_increase = player_speed_rounded / 2;
         m_groundSizeIncrease = rdm.Next(min_ground_size_increase,player_speed_rounded);
         m_templateCounter++;

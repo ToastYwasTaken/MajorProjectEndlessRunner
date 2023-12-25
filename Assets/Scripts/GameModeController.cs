@@ -29,6 +29,7 @@ using UnityEngine;
 *  26.11.2023   FM  moved GameMode check
 *  05.12.2023   FM  added SetCurrentGameMode()
 *  12.12.2023   FM  changed threshold values in inspector
+*  22.12.2023   FM  implemented auto getters / setters
 *  
 *  TODO: 
 *      - 
@@ -58,8 +59,12 @@ public class GameModeController : MonoBehaviour
     //Threshold describing the speed needed to switch to higher difficulty
 
     [SerializeField]
+    public EGameModes currentGameMode { get { return m_currentGameMode; } set { m_currentGameMode = value; } }
     private EGameModes m_currentGameMode;
+
     private EGameModes m_nextGameMode;
+    [SerializeField]
+    public bool gameModeChanged { get { return m_gameModeChanged; } set { m_gameModeChanged = value; } }
     private bool m_gameModeChanged;
 
     [SerializeField, Tooltip("Threshold to be hit to enter VeryEasy Mode (This should be active from the start)")]
@@ -158,24 +163,6 @@ public class GameModeController : MonoBehaviour
             m_currentGameMode = EGameModes.EXTREME;
             Debug.Log("Hit extreme speed threshold");
         }
-    }
-
-    public EGameModes GetCurrentGameMode()
-    {
-        return m_currentGameMode;
-    }
-    public bool GetGameModeChanged()
-    {
-        return m_gameModeChanged;
-    }
-    public void SetGameModeChanged(bool _value)
-    {
-        m_gameModeChanged = _value;
-    }
-
-    public void SetCurrentGameMode(EGameModes _gameMode)
-    {
-        m_currentGameMode = _gameMode;
     }
 
 }

@@ -15,6 +15,7 @@ using UnityEngine;
  * ----------------------------
  * Script Description:
  * Manipulates loaded values from GameDataManager.cs to adjust difficulty properly
+ * NOTE: This works per SESSION and does NOT save data ACCROSS sessions so far
  * 
  * ----------------------------
  * ChangeLog:
@@ -29,17 +30,23 @@ using UnityEngine;
  *****************************************************************************/
 public static class DynamicDifficultyAdjuster
 {
-    public static float CalculateAdjustedSpeedModifier(float _oldSpeedModifier, float _distanceTravelled, int _deathCounter)
+    private static EPlayerType m_playerType = EPlayerType.NOOB;
+    public static float CalculateAdjustedSpeedModifier(float _oldSpeedModifier)
     {
-        float 
-        float new_speed_modifier = MapperHelper.RemapValueTwoRanges(_oldSpeedModifier, );
+        float default_factor = (int)m_playerType;
+        float new_speed_modifier = _oldSpeedModifier + default_factor;
 
         return new_speed_modifier;
     }
 
-    
+    public static EPlayerType UpdatePlayerType()
+    {
+        EPlayerType new_player_type;
+        //Calculate player type with input data
 
 
+        return new_player_type;
+    }
 }
 
 
