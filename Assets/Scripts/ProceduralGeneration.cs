@@ -49,6 +49,7 @@ using UnityEngine;
 *  10.12.2023   FM  improved calculation of obstacle spawn pos min and max value; still have to fix the randomization
 *  12.12.2023   FM  improved spawn pos calculation by adding another OverlapSphere to avoid nearby obstacle spawning, removed alternative calculation for obstacle spawn pos randomization
 *  14.12.2023   FM  added MapObstacleSpawnRange() to generate better amounts of spawned obstacles, added rotated Quads as obstacles
+*  26.12.2023   FM  exported most Helper functions to MapperAndRdmHelper.cs
 *  
 *  TODO:
 *       - tweak constraints for Obstacle Spawning - done
@@ -261,10 +262,10 @@ public class ProceduralGeneration : MonoBehaviour
     private void CalculateRandomObstacles()
     {
         System.Random rdm = new System.Random();
-        //Calculate range
-        int max_amount_of_prefabs_to_spawn = CalculateObstacleMaxSpawnAmount();
+        //Calculate max spawn amount
+        int max_amount_of_prefabs_to_spawn = MapperAndRdmHelper.CalculateObstacleMaxSpawnAmount(c_defaultObstacleSpawnValue, m_groundScale.z, c_originalGroundScaleZ, obstacleDensity, m_currentGameMode);
         //Remap the "big" range to a smaller range to narrow randomization range
-        (int,int) amount_of_prefabs_to_spawn_range_mapped = MapperHelper.RemapRange(c_minObstacleAmount, max_amount_of_prefabs_to_spawn, 0.4f, c_minRequiredRangeToMap);
+        (int,int) amount_of_prefabs_to_spawn_range_mapped = MapperAndRdmHelper.ReduceRangeByFactor(c_minObstacleAmount, max_amount_of_prefabs_to_spawn, 0.4f, c_minRequiredRangeToMap);
         //Randomize range
         int random_amount_of_prefabs_to_spawn = rdm.Next(amount_of_prefabs_to_spawn_range_mapped.Item1, amount_of_prefabs_to_spawn_range_mapped.Item2);
         //Debug.Log("groundscaleZ: " + m_groundScale.z + "gameModeModifier: "+ (1 + (int)m_currentGameMode) * 0.1f + " min prefabs to spawn: " + min_amount_of_prefabs_to_spawn + " max prefabs to spawn: " + max_amount_of_prefabs_to_spawn + " randomized: " + random_amount_of_prefabs_to_spawn);
@@ -289,13 +290,13 @@ public class ProceduralGeneration : MonoBehaviour
             while (!spawned_successfully && attempts < break_value)
             {
                 //Randomize spawn positions
-                float obstacle_spawn_pos_x = RandomizeFloat(obstacle_spawn_pos_x_min, obstacle_spawn_pos_x_max);
-                float obstacle_spawn_pos_z = RandomizeFloat(obstacle_spawn_pos_z_min, obstacle_spawn_pos_z_max);
+                float obstacle_spawn_pos_x = MapperAndRdmHelper.RandomizeFloat(obstacle_spawn_pos_x_min, obstacle_spawn_pos_x_max);
+                float obstacle_spawn_pos_z = MapperAndRdmHelper.RandomizeFloat(obstacle_spawn_pos_z_min, obstacle_spawn_pos_z_max);
                 obstacle_spawn_pos = new Vector3(obstacle_spawn_pos_x, m_distanceToGround, obstacle_spawn_pos_z);
                 //Reroll check
                 Vector3 box_position = obstacle_spawn_pos;
                 Collider[] hit_colliders = new Collider[1];
-                Quaternion randomized_spawn_rotation = RandomizeQuaternionY();
+                Quaternion randomized_spawn_rotation = MapperAndRdmHelper.RandomizeQuaternionY();
                 int colliders_found = Physics.OverlapBoxNonAlloc(box_position, rerollBoxScale, hit_colliders, Quaternion.identity, rayCastLayer);
                 //randomize if reroll check is successful // chance 4 : 1 to reroll
                 if (colliders_found != 0 && rdm.Next(0, 5) != 0)
@@ -325,42 +326,6 @@ public class ProceduralGeneration : MonoBehaviour
         //Debug.Log("Actually spawned: " + obstacles_spawned_counter + " obstacles");
     }
 
-    private Quaternion RandomizeQuaternionY()
-    {
-        System.Random rdm = new System.Random();
-        int random_y = 0;
-        //Chance 2 : 1 to keep original Quaternion
-        if(rdm.Next(0, 3) != 0)
-        {
-        random_y = rdm.Next(0, 360);
-        }
-        Quaternion randomized_quaternion = Quaternion.Euler(0, random_y, 0);
-        return randomized_quaternion;
-    }
-
-    /// <summary>
-    /// Choose amount of obstacles depending on size of ground/template and obstacleDensity
-    /// </summary>
-    /// <returns>amount of max prefabs to spawn</returns>
-    private int CalculateObstacleMaxSpawnAmount()
-    {
-        int prefab_amount_max = c_defaultObstacleSpawnValue + ((int)((m_groundScale.z - c_originalGroundScaleZ)
-            * obstacleDensity * (1 + (int)m_currentGameMode) * 0.1f));
-        return prefab_amount_max;
-    }
-
-    /// <summary>
-    /// returns a random float within given range
-    /// </summary>
-    /// <param name="_minValue">inclusive min value</param>
-    /// <param name="_maxValue">exclusive max value</param>
-    /// <returns>a randomized float</returns>
-    private float RandomizeFloat(float _minValue, float _maxValue)
-    {
-        System.Random rdm = new System.Random();
-        float value = (float)(rdm.NextDouble() * (_maxValue - _minValue) + _minValue);
-        return value;
-    }
     private void OnDrawGizmos()
     {
         //Gizmos.color = Color.yellow;

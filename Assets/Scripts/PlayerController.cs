@@ -34,12 +34,14 @@ using UnityEngine;
  *  21.12.2023   FM  Updated getters / setters; fixed implementation of SavableBehaviour by correcting 
  *                   deserialization of JsonData objects; removed SerializeValue() and DeserializeValue()
  *  22.12.2023   FM  Fixed getters / setters causing issues
+ *  26.12.2023   FM  Removed speedVertical from Data saving
  *  
  *                  
  *  TODO: 
  *      - Implement colliders switching GameModes - done
  *      - Fix speed increase to work properly - done
  *      - Correct type conversion of JsonData to my required data types - done
+ *      - Add up travelDistance across deaths aswell
  *      
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
@@ -94,7 +96,6 @@ public class PlayerController : SaveableBehavior
     #endregion
 
     #region Data Saving
-    private const string c_speedVerticalKey = "speedVertical";
     private const string c_distanceTravelledKey = "distance";
     private const string c_deathCounterKey = "deathCounter";
 
@@ -106,11 +107,10 @@ public class PlayerController : SaveableBehavior
         get
         {
             var result = new JsonData();
-            result[c_speedVerticalKey] = m_speedVertical;
             m_distanceTravelled = m_playerPosition.z;
             result[c_distanceTravelledKey] = m_distanceTravelled;
             result[c_deathCounterKey] =  ++m_deathCounter;  //incrementing death counter
-            Debug.Log("Saving speedVertical: " + m_speedVertical + " distanceTravelled: " + m_distanceTravelled + " and deathcounter: " + m_deathCounter);
+            Debug.Log("Saving distanceTravelled: " + m_distanceTravelled + " and deathcounter: " + m_deathCounter);
             return result;
         }
     }
@@ -121,10 +121,7 @@ public class PlayerController : SaveableBehavior
     /// <param name="data">data to load here</param>
     public override void LoadFromData(JsonData data)
     {
-        if (data.ContainsKey(c_speedVerticalKey))
-        {
-            m_speedVerticalLoaded = (float)((double)data[c_speedVerticalKey]);
-        }
+
         if (data.ContainsKey(c_distanceTravelledKey))
         {
             m_distanceTravelledLoaded = (float)((double)data[c_distanceTravelledKey]);
@@ -133,8 +130,9 @@ public class PlayerController : SaveableBehavior
         {
             m_deathCounterLoaded = (int)(data[c_deathCounterKey]);
         }
-        Debug.Log("Loaded values BEFORE DDA - speedVert: " + m_speedVerticalLoaded + " distanceTravelled: " + m_distanceTravelledLoaded + " deathcounter: " + m_deathCounterLoaded);
+        Debug.Log("Loaded values BEFORE DDA - distanceTravelled: " + m_distanceTravelledLoaded + " deathcounter: " + m_deathCounterLoaded);
         m_speedModifier = DynamicDifficultyAdjuster.CalculateAdjustedSpeedModifier(m_speedModifier);
+        DynamicDifficultyAdjuster.UpdatePlayerType(m_distanceTravelledLoaded,  m_deathCounter);
         Debug.Log("Adjusted speed modifier AFTER DDA: " + m_speedModifier);
     }
     #endregion
