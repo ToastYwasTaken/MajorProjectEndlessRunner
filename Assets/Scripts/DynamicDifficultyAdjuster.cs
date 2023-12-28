@@ -30,8 +30,8 @@ using UnityEngine;
  *****************************************************************************/
 public static class DynamicDifficultyAdjuster
 {
-    public static EPlayerType CurrentPlayerType { get { return s_playerType; } private set { s_playerType = value; } }
-    private static EPlayerType s_playerType = EPlayerType.NOOB;
+    public static EPlayerSkillLevel CurrentPlayerType { get { return s_playerType; } private set { s_playerType = value; } }
+    private static EPlayerSkillLevel s_playerType = EPlayerSkillLevel.NOOB;
 
     private static float s_beginnerThreshold = 100f;
     private static float s_intermediateThreshold = 300f;
@@ -67,38 +67,56 @@ public static class DynamicDifficultyAdjuster
     public static void UpdatePlayerType(float _distanceTravelled, int _deathCounter)
     {
         //Calculate player type with input data
-        float deathcounter_to_distance_ratio = _distanceTravelled / _deathCounter;
-        if(deathcounter_to_distance_ratio < s_beginnerThreshold)
+        if(_deathCounter > 0)
         {
-            s_playerType = EPlayerType.NOOB;
-        }else if(deathcounter_to_distance_ratio < s_intermediateThreshold)
-        {
-            s_playerType = EPlayerType.BEGINNER;
-        }else if(deathcounter_to_distance_ratio < s_advancedThreshold)
-        {
-            s_playerType = EPlayerType.INTERMEDIATE;
-        }else if(deathcounter_to_distance_ratio < s_expertThreshold)
-        {
-            s_playerType = EPlayerType.ADVANCED;
-        }else //expert
-        {
-            s_playerType = EPlayerType.EXPERT;
+            float deathcounter_to_distance_ratio = _distanceTravelled / _deathCounter;
+            Debug.Log("DC / distance: " + deathcounter_to_distance_ratio);
+            if (deathcounter_to_distance_ratio < s_beginnerThreshold)
+            {
+                s_playerType = EPlayerSkillLevel.NOOB;
+            }
+            else if (deathcounter_to_distance_ratio < s_intermediateThreshold)
+            {
+                s_playerType = EPlayerSkillLevel.BEGINNER;
+            }
+            else if (deathcounter_to_distance_ratio < s_advancedThreshold)
+            {
+                s_playerType = EPlayerSkillLevel.INTERMEDIATE;
+            }
+            else if (deathcounter_to_distance_ratio < s_expertThreshold)
+            {
+                s_playerType = EPlayerSkillLevel.ADVANCED;
+            }
+            else //expert
+            {
+                s_playerType = EPlayerSkillLevel.EXPERT;
+            }
+            Debug.Log("Switched to player type: " + s_playerType);
         }
-        Debug.Log("Switched to player type: " + s_playerType);
     }
 
 
 }
 
-
 /// <summary>
-/// Summarises playertypes by skill level
+/// Categorises playertypes by skill level
 /// </summary>
-public enum EPlayerType
+public enum EPlayerSkillLevel
 {
     NOOB = 0,
     BEGINNER = 1,
     INTERMEDIATE = 2,
     ADVANCED = 3,
     EXPERT = 4,
+}
+
+/// <summary>
+/// Categorises PlayerType by enjoyment type
+/// EASY_FUN = casual player
+/// HARD_FUN = difficulty enjoying player
+/// </summary>
+public enum EPlayerType
+{
+    EASY_FUN = 0,
+    HARD_FUN = 1,
 }

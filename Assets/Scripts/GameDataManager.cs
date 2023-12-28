@@ -29,6 +29,7 @@ using UnityEngine.Events;
  * ----------------------------
  * ChangeLog:
  *  18.12.2023   FM  created
+ *  28.12.2023   FM  added id to save file, added subFolder segregation between global and session files
  *  
  *  TODO: 
  *      - 
@@ -43,12 +44,15 @@ public static class GameDataManager
     private const string c_saveID = "$saveID";
     static UnityAction<Scene, LoadSceneMode>
     ALoadObjectsAfterSceneLoad;
+    public static int S_sessionID { get {return s_sessionID; } private set {s_sessionID = value; } }
+    private static int s_sessionID = 0;
 
     /// <summary>
     /// Saves Player data to .json file
     /// </summary>
     /// <param name="_fileName">name of file to save</param>
-    public static void SaveStats(string _fileName)
+    /// <param name="_subFolder">name of subfolder in persistent path</param>
+    public static void SaveStats(string _fileName, string _subFolder)
     {
         JsonData final_json_data = new JsonData();
         //locate all Savable classes in scene
@@ -67,7 +71,8 @@ public static class GameDataManager
             final_json_data[c_objectsKey] = saved_objects;
         }
         //Create new output path
-        var output_path = Path.Combine(Application.persistentDataPath, _fileName);
+        //get only filename, Add id, Add .json, overwrite output_path
+        var output_path = Path.Combine(Application.persistentDataPath + _subFolder, Path.GetFileNameWithoutExtension(_fileName) + s_sessionID++ + ".json");
         //Write json file
         var json_writer = new JsonWriter();
         json_writer.PrettyPrint = true;
@@ -84,11 +89,12 @@ public static class GameDataManager
     /// Loads previously saved data
     /// </summary>
     /// <param name="_fileName">name of file to load</param>
+    /// <param name="_subFolder">name of subfolder in persistent path</param>
     /// <returns>true if loaded successfully</returns>
-    public static bool LoadStats(string _fileName)
+    public static bool LoadStats(string _fileName, string _subFolder)
     {
-        //Debug.Log("Trying to load player stats");
-        var path = Path.Combine(Application.persistentDataPath, _fileName);
+        var path = Path.Combine(Application.persistentDataPath + _subFolder, _fileName);
+        Debug.Log("Trying to load player stats at: " + path);
         if (File.Exists(path))
         {
             string text = File.ReadAllText(path);
@@ -120,7 +126,7 @@ public static class GameDataManager
                             {
                                 var loadableObject = allLoadableObjects[saveID];
                                 //Load object data
-                                Debug.Log("Loading object data");
+                                //Debug.Log("Loading object data");
                                 loadableObject.LoadFromData(objectData);
                             }
                         }
@@ -134,7 +140,7 @@ public static class GameDataManager
                     // Register the object-loading code to run after the scene loads.
                     SceneManager.sceneLoaded += ALoadObjectsAfterSceneLoad;
                 }
-                //Debug.Log("Player stats loaded successfully");
+                Debug.Log("Player stats loaded successfully");
                 return true;
             }
             else return false;

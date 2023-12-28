@@ -249,7 +249,7 @@ public class ProceduralGeneration : MonoBehaviour
         System.Random rdm = new System.Random();
         //Calculate ground size increase
         int player_speed_rounded = (int)m_playerControllerRef.speedVertical;
-        Debug.Log((int)m_playerControllerRef.speedVertical);
+        //Debug.Log((int)m_playerControllerRef.speedVertical);
         int min_ground_size_increase = player_speed_rounded / 2;
         m_groundSizeIncrease = rdm.Next(min_ground_size_increase,player_speed_rounded);
         m_templateCounter++;

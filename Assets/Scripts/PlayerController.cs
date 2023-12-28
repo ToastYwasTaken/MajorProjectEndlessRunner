@@ -121,7 +121,6 @@ public class PlayerController : SaveableBehavior
     /// <param name="data">data to load here</param>
     public override void LoadFromData(JsonData data)
     {
-
         if (data.ContainsKey(c_distanceTravelledKey))
         {
             m_distanceTravelledLoaded = (float)((double)data[c_distanceTravelledKey]);
@@ -129,11 +128,12 @@ public class PlayerController : SaveableBehavior
         if (data.ContainsKey(c_deathCounterKey))
         {
             m_deathCounterLoaded = (int)(data[c_deathCounterKey]);
+            m_deathCounter = m_deathCounterLoaded; //deathcounter needs to be incremented each time saved, therefore it's real value has to be adjusted here
         }
         Debug.Log("Loaded values BEFORE DDA - distanceTravelled: " + m_distanceTravelledLoaded + " deathcounter: " + m_deathCounterLoaded);
-        m_speedModifier = DynamicDifficultyAdjuster.CalculateAdjustedSpeedModifier(m_speedModifier);
-        DynamicDifficultyAdjuster.UpdatePlayerType(m_distanceTravelledLoaded,  m_deathCounter);
-        Debug.Log("Adjusted speed modifier AFTER DDA: " + m_speedModifier);
+        //m_speedModifier = DynamicDifficultyAdjuster.CalculateAdjustedSpeedModifier(m_speedModifier);
+        //DynamicDifficultyAdjuster.UpdatePlayerType(m_distanceTravelledLoaded,  m_deathCounter);
+        //Debug.Log("Adjusted speed modifier AFTER DDA: " + m_speedModifier);
     }
     #endregion
 

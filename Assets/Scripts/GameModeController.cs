@@ -118,7 +118,7 @@ public class GameModeController : MonoBehaviour
             m_gameModeChanged = true;
             m_nextGameMode++;
         }
-        Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
+        //Debug.Log("curr game mode: " + m_currentGameMode + " next game mode: " + m_nextGameMode);
         if (m_currentGameMode == EGameModes.GAMEOVER)
         {
             m_mySceneManagerRef.LoadGameOver();
