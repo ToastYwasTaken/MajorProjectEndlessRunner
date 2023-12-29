@@ -103,6 +103,7 @@ public static class DynamicDifficultyAdjuster
 /// </summary>
 public enum EPlayerSkillLevel
 {
+    NONE = -1,
     NOOB = 0,
     BEGINNER = 1,
     INTERMEDIATE = 2,
@@ -117,6 +118,7 @@ public enum EPlayerSkillLevel
 /// </summary>
 public enum EPlayerType
 {
+    NONE = -1,
     EASY_FUN = 0,
     HARD_FUN = 1,
 }

@@ -20,7 +20,8 @@ using UnityEngine.SceneManagement;
 * ChangeLog:
 *  05.12.2023   FM  created; added Load functions for different scenes
 *  18.12.2023   FM  added GameDataManager references to save and load data
-*  28.12.2023   FM  added more saving / loading functionalityS
+*  28.12.2023   FM  added more saving / loading functionality
+*  29.12.2023   FM  edited saving / loading
 *  
 *  TODO: 
 *      - 
@@ -43,17 +44,17 @@ public class MySceneManager : MonoBehaviour
             Instance = this;
         }
         //load global stats on Awake
-        GameDataManager.LoadStats("GlobalSave.json", "/GlobalSaves");
+        GameDataManager.LoadGlobalStats("Save.json");
     }
 
     public void LoadPlayMode()
     {
-        GameDataManager.LoadStats("SessionSave" + (GameDataManager.S_sessionID-1) + ".json", "/SessionSaves");
+        GameDataManager.LoadSessionStats("Save.json");
         SceneManager.LoadScene("PlayMode");
     }
     public void LoadGameOver()
     {
-        GameDataManager.SaveStats("SessionSave.json", "/SessionSaves");
+        GameDataManager.SaveSessionStats("Save.json");
         SceneManager.LoadScene("GameOver");
     }
     public void LoadMainMenu()
@@ -68,6 +69,6 @@ public class MySceneManager : MonoBehaviour
     //Final call before Quitting
     private void OnApplicationQuit()
     {
-        GameDataManager.SaveStats("GlobalSave.json", "/GlobalSaves");
+        GameDataManager.SaveGlobalStats("Save.json");
     }
 }

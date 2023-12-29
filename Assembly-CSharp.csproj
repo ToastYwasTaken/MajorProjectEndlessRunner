@@ -61,6 +61,7 @@
     <Compile Include="Assets\LitJson\LitJson\Lexer.cs" />
     <Compile Include="Assets\Scripts\GameModeController.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonMockWrapper.cs" />
+    <Compile Include="Assets\Scripts\GameData.cs" />
     <Compile Include="Assets\Scripts\ProceduralGeneration.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonWriter.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonData.cs" />

@@ -364,6 +364,7 @@
 "Assets/LitJson/LitJson/ParserToken.cs"
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/DynamicDifficultyAdjuster.cs"
+"Assets/Scripts/GameData.cs"
 "Assets/Scripts/GameDataManager.cs"
 "Assets/Scripts/GameModeController.cs"
 "Assets/Scripts/MapperAndRdmHelper.cs"

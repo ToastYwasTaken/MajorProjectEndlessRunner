@@ -35,19 +35,19 @@ using UnityEngine;
  *                   deserialization of JsonData objects; removed SerializeValue() and DeserializeValue()
  *  22.12.2023   FM  Fixed getters / setters causing issues
  *  26.12.2023   FM  Removed speedVertical from Data saving
+ *  29.12.2023   FM  Removed implementation of SaveableBehaviour; moved data saving to GameData.cs
  *  
  *                  
  *  TODO: 
  *      - Implement colliders switching GameModes - done
  *      - Fix speed increase to work properly - done
  *      - Correct type conversion of JsonData to my required data types - done
- *      - Add up travelDistance across deaths aswell
  *      
  *  Buglist:
  *      - Player sticking to the wall when holding left or right respectively
  *  
  *****************************************************************************/
-public class PlayerController : SaveableBehavior
+public class PlayerController : MonoBehaviour
 {
     [SerializeField]
     private GameObject gameModeControllerGO;
@@ -95,47 +95,6 @@ public class PlayerController : SaveableBehavior
     public static PlayerController Instance { get; private set; }
     #endregion
 
-    #region Data Saving
-    private const string c_distanceTravelledKey = "distance";
-    private const string c_deathCounterKey = "deathCounter";
-
-    /// <summary>
-    /// Data that is written to disk
-    /// </summary>
-    public override JsonData SavedData
-    {
-        get
-        {
-            var result = new JsonData();
-            m_distanceTravelled = m_playerPosition.z;
-            result[c_distanceTravelledKey] = m_distanceTravelled;
-            result[c_deathCounterKey] =  ++m_deathCounter;  //incrementing death counter
-            Debug.Log("Saving distanceTravelled: " + m_distanceTravelled + " and deathcounter: " + m_deathCounter);
-            return result;
-        }
-    }
-    /// <summary>
-    /// Loads data from previous game
-    /// additional cast needed bc sh JsonData can't directly convert to float
-    /// </summary>
-    /// <param name="data">data to load here</param>
-    public override void LoadFromData(JsonData data)
-    {
-        if (data.ContainsKey(c_distanceTravelledKey))
-        {
-            m_distanceTravelledLoaded = (float)((double)data[c_distanceTravelledKey]);
-        }
-        if (data.ContainsKey(c_deathCounterKey))
-        {
-            m_deathCounterLoaded = (int)(data[c_deathCounterKey]);
-            m_deathCounter = m_deathCounterLoaded; //deathcounter needs to be incremented each time saved, therefore it's real value has to be adjusted here
-        }
-        Debug.Log("Loaded values BEFORE DDA - distanceTravelled: " + m_distanceTravelledLoaded + " deathcounter: " + m_deathCounterLoaded);
-        //m_speedModifier = DynamicDifficultyAdjuster.CalculateAdjustedSpeedModifier(m_speedModifier);
-        //DynamicDifficultyAdjuster.UpdatePlayerType(m_distanceTravelledLoaded,  m_deathCounter);
-        //Debug.Log("Adjusted speed modifier AFTER DDA: " + m_speedModifier);
-    }
-    #endregion
 
     private void Awake()
     {
