@@ -61,16 +61,15 @@
     <Compile Include="Assets\LitJson\LitJson\Lexer.cs" />
     <Compile Include="Assets\Scripts\GameModeController.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonMockWrapper.cs" />
-    <Compile Include="Assets\Scripts\GameData.cs" />
     <Compile Include="Assets\Scripts\ProceduralGeneration.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonWriter.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonData.cs" />
-    <Compile Include="Assets\Scripts\GameDataManager.cs" />
     <Compile Include="Assets\Scripts\MapperAndRdmHelper.cs" />
     <Compile Include="Assets\Scripts\MySceneManager.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonReader.cs" />
     <Compile Include="Assets\Scripts\ObjectSpawner.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\SavingService.cs" />
     <Compile Include="Assets\LitJson\LitJson\JsonException.cs" />
     <Compile Include="Assets\LitJson\LitJson\IJsonWrapper.cs" />
     <Compile Include="Assets\Scripts\CameraController.cs" />

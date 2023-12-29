@@ -44,17 +44,17 @@ public class MySceneManager : MonoBehaviour
             Instance = this;
         }
         //load global stats on Awake
-        GameDataManager.LoadGlobalStats("Save.json");
+        //GameDataManager.LoadGlobalStats("Save.json");
     }
 
     public void LoadPlayMode()
     {
-        GameDataManager.LoadSessionStats("Save.json");
+        //GameDataManager.LoadSessionStats("Save.json");
         SceneManager.LoadScene("PlayMode");
     }
     public void LoadGameOver()
     {
-        GameDataManager.SaveSessionStats("Save.json");
+        SavingService.SaveSessionData();
         SceneManager.LoadScene("GameOver");
     }
     public void LoadMainMenu()
@@ -69,6 +69,6 @@ public class MySceneManager : MonoBehaviour
     //Final call before Quitting
     private void OnApplicationQuit()
     {
-        GameDataManager.SaveGlobalStats("Save.json");
+        //GameDataManager.SaveGlobalStats("Save.json");
     }
 }

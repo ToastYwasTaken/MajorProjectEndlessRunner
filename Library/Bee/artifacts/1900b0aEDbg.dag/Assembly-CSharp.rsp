@@ -364,14 +364,13 @@
 "Assets/LitJson/LitJson/ParserToken.cs"
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/DynamicDifficultyAdjuster.cs"
-"Assets/Scripts/GameData.cs"
-"Assets/Scripts/GameDataManager.cs"
 "Assets/Scripts/GameModeController.cs"
 "Assets/Scripts/MapperAndRdmHelper.cs"
 "Assets/Scripts/MySceneManager.cs"
 "Assets/Scripts/ObjectSpawner.cs"
 "Assets/Scripts/PlayerController.cs"
 "Assets/Scripts/ProceduralGeneration.cs"
+"Assets/Scripts/SavingService.cs"
 -langversion:9.0
 
 /deterministic
