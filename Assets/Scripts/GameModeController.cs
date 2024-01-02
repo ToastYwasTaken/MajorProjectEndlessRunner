@@ -109,7 +109,7 @@ public class GameModeController : MonoBehaviour
     }
     private void Update()
     {
-        m_playerSpeed = m_playerControllerRef.speedVertical;
+        m_playerSpeed = m_playerControllerRef.SpeedVertical;
         UpdateGameMode();
         //Update nextGameMode
         if (m_nextGameMode == m_currentGameMode)

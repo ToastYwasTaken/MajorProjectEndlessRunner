@@ -20,6 +20,7 @@ using UnityEngine;
  * ChangeLog:
  *  21.12.2023   FM  created, mover RemapRange() here from ProceduralGeneration.cs,
  *                   added RemapValueFromOldRangeToNewRange
+ *  01.01.2023   FM  decreased multiplication factor of gameMode in CalculateObstacleMaxSpawnAmount()
  *  
  *  TODO: 
  *      - 
@@ -107,7 +108,7 @@ public static class MapperAndRdmHelper
     public static int CalculateObstacleMaxSpawnAmount(int _defaultValue, float _currentGroundScaleZ, float _originalGroundScaleZ, float _obstacleDensity, EGameModes _currentGameMode)
     {
         int prefab_amount_max = _defaultValue + ((int)((_currentGroundScaleZ - _originalGroundScaleZ)
-            * _obstacleDensity * (1 + (int)_currentGameMode) * 0.1f));
+            * _obstacleDensity * (1 + (int)_currentGameMode) * 0.05f));
         return prefab_amount_max;
     }
 

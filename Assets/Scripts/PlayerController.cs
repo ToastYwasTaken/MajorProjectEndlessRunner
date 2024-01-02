@@ -35,7 +35,7 @@ using UnityEngine;
  *                   deserialization of JsonData objects; removed SerializeValue() and DeserializeValue()
  *  22.12.2023   FM  Fixed getters / setters causing issues
  *  26.12.2023   FM  Removed speedVertical from Data saving
- *  29.12.2023   FM  Removed implementation of SaveableBehaviour; moved data saving to GameData.cs
+ *  29.12.2023   FM  Removed implementation of SaveableBehaviour; moved data saving to SavingService.cs
  *  
  *                  
  *  TODO: 
@@ -59,15 +59,10 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded;   
     [SerializeField, Tooltip("Scales gravity to accellerate player fall speed")]
     private Vector3 scaledGravityVector;
-    /// <summary>
-    /// 
-    /// </summary>
-    [Tooltip("Player position")]
-    public Vector3 playerPosition { get { return m_playerPosition; } set { m_playerPosition = value; } }
-    private Vector3 m_playerPosition;
     [Tooltip("Speed moving forward")]
-    public float speedVertical { get { return m_speedVertical; } set { m_speedVertical = value; } }
+    public float SpeedVertical { get { return m_speedVertical; } set { m_speedVertical = value; } }
     private float m_speedVertical = 9f;
+
 
     #region constants
     private const float c_jumpForce = 10f;    //jump force multiplier
@@ -79,12 +74,22 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region DDA 
-    private float m_speedModifier = 1.0f;
-    private float m_distanceTravelled;
-    private float m_distanceTravelledLoaded;
+    [Tooltip("Player position")]
+    public Vector3 PlayerPosition { get { return m_playerPosition; } set { m_playerPosition = value; } }
+    private Vector3 m_playerPosition;
+    private float m_speedModifier;
+    [Tooltip("Death counter")]
+    public int DeathCounter { get { return m_deathCounter; } set { m_deathCounter = value; } }
+
     private int m_deathCounter = 0;
-    private int m_deathCounterLoaded;
-    private float m_speedVerticalLoaded;
+    [Tooltip("Player type")]
+    public EPlayerType PlayerType { get { return m_playerType; } set { m_playerType = value; } }
+
+    private EPlayerType m_playerType = EPlayerType.NONE;
+    [Tooltip("Player skill level")]
+    public EPlayerSkillLevel PlayerSkillLevel { get { return m_playerSkillLevel; } set { m_playerSkillLevel = value; } }
+
+    private EPlayerSkillLevel m_playerSkillLevel = EPlayerSkillLevel.NONE;
     #endregion
 
     #region other
@@ -118,6 +123,12 @@ public class PlayerController : MonoBehaviour
         //Set player spawn values
         transform.position = new Vector3(0,1.5f,0);
         transform.rotation = Quaternion.identity;
+        //Load DDA values
+        m_deathCounter = DynamicDifficultyAdjuster.DeathCounter;
+        m_speedModifier = DynamicDifficultyAdjuster.SpeedModifier;
+        m_playerSkillLevel = DynamicDifficultyAdjuster.PlayerSkillLevel;
+        m_playerType = DynamicDifficultyAdjuster.PlayerType;
+        Debug.Log("DC: " + m_deathCounter + " - speed mod: " + m_speedModifier + " - playerSkill: " + m_playerSkillLevel + " - playerType: " + m_playerType);
     }
 
     void Update()
@@ -198,6 +209,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Obstacle"))
         {
+            m_deathCounter++;
             m_gameModeControllerRef.currentGameMode = EGameModes.GAMEOVER;
         }
     }

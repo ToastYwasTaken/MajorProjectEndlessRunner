@@ -106,8 +106,8 @@ public class ProceduralGeneration : MonoBehaviour
     #endregion
 
     #region Obstacle Variables
-    [SerializeField, Range(0.1f,1f), Tooltip("Manually controlled density of random obstacles to spawn")]
-    private float obstacleDensity;
+    public float ObstacleDensity { get { return m_obstacleDensity;} set{ m_obstacleDensity = value; } }
+    private float m_obstacleDensity = 1f;
     [SerializeField, Tooltip("Size of box to check for colliders, used to avoid spawn overlaps")]
     private Vector3 overlapBoxScale;
     [SerializeField, Tooltip("Size of box to check for colliders, used to reduce chance of 'near' spawning")]
@@ -148,6 +148,9 @@ public class ProceduralGeneration : MonoBehaviour
         m_inPlayMode = true;
         CalculateStartingTemplate();
         m_objectSpawnerRef.SpawnTemplate(m_templateSpawnPosition, m_templateSpawnRotation, m_groundScale, m_wallScale, m_groundColor, m_wallColor, true);
+        //Load DDA values
+        m_obstacleDensity = DynamicDifficultyAdjuster.ObstacleDensity;
+        Debug.Log("Obstacle Density: " + m_obstacleDensity);
     }
 
     private void Update()
@@ -161,7 +164,7 @@ public class ProceduralGeneration : MonoBehaviour
         }
         //Debug.Log("tempSpawnPosZ: " + (m_templateSpawnPosition.z) + " playerPosZ: " + m_playerPositionZ);
         //Update playerPos and renderdistance relative to player position
-        m_playerPositionZ = m_playerControllerRef.playerPosition.z;
+        m_playerPositionZ = m_playerControllerRef.PlayerPosition.z;
         var render_distance_relative = m_playerPositionZ + renderDistance;
         if(m_templateSpawnPosition.z < render_distance_relative)
         {
@@ -247,8 +250,8 @@ public class ProceduralGeneration : MonoBehaviour
         m_templateSpawnPosition += new Vector3 (0,0,template_spawn_posZ + (m_groundSizeIncrease/2));
         //Increasing the size increase for future spawns to counter shorter sections in higher speeds, randomize the increment
         System.Random rdm = new System.Random();
-        //Calculate ground size increase
-        int player_speed_rounded = (int)m_playerControllerRef.speedVertical;
+        //Calculate ground size increase to increase proportional to player's speed
+        int player_speed_rounded = (int)m_playerControllerRef.SpeedVertical;
         //Debug.Log((int)m_playerControllerRef.speedVertical);
         int min_ground_size_increase = player_speed_rounded / 2;
         m_groundSizeIncrease = rdm.Next(min_ground_size_increase,player_speed_rounded);
@@ -263,7 +266,7 @@ public class ProceduralGeneration : MonoBehaviour
     {
         System.Random rdm = new System.Random();
         //Calculate max spawn amount
-        int max_amount_of_prefabs_to_spawn = MapperAndRdmHelper.CalculateObstacleMaxSpawnAmount(c_defaultObstacleSpawnValue, m_groundScale.z, c_originalGroundScaleZ, obstacleDensity, m_currentGameMode);
+        int max_amount_of_prefabs_to_spawn = MapperAndRdmHelper.CalculateObstacleMaxSpawnAmount(c_defaultObstacleSpawnValue, m_groundScale.z, c_originalGroundScaleZ, m_obstacleDensity, m_currentGameMode);
         //Remap the "big" range to a smaller range to narrow randomization range
         (int,int) amount_of_prefabs_to_spawn_range_mapped = MapperAndRdmHelper.ReduceRangeByFactor(c_minObstacleAmount, max_amount_of_prefabs_to_spawn, 0.4f, c_minRequiredRangeToMap);
         //Randomize range

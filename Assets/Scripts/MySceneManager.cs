@@ -32,6 +32,10 @@ using UnityEngine.SceneManagement;
 public class MySceneManager : MonoBehaviour
 {
     public static MySceneManager Instance { get; private set; }
+    private GameObject m_playerGO;
+    private PlayerController m_playerRef;
+    private int m_timesLaunched;
+    private bool m_launchedGame = true;
     private void Awake()
     {
         //Singleton checks
@@ -43,23 +47,34 @@ public class MySceneManager : MonoBehaviour
         {
             Instance = this;
         }
-        //load global stats on Awake
-        //GameDataManager.LoadGlobalStats("Save.json");
+        m_timesLaunched = DynamicDifficultyAdjuster.TimesLaunched;
+        if (m_launchedGame)
+        {
+            m_timesLaunched++;
+        }
+        
     }
 
     public void LoadPlayMode()
     {
-        //GameDataManager.LoadSessionStats("Save.json");
+        DynamicDifficultyAdjuster.UpdateDifficulty();
         SceneManager.LoadScene("PlayMode");
     }
     public void LoadGameOver()
     {
-        SavingService.SaveSessionData();
+        m_playerGO = GameObject.FindGameObjectWithTag("Player");
+        m_playerRef = m_playerGO.GetComponent<PlayerController>();
+        SavingService.SaveData(m_playerRef.PlayerPosition.z, m_playerRef.DeathCounter, m_playerRef.PlayerType , m_playerRef.PlayerSkillLevel, m_timesLaunched);
         SceneManager.LoadScene("GameOver");
     }
     public void LoadMainMenu()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void DeleteDDAData()
+    {
+        PlayerPrefs.DeleteAll();
     }
     public void ExitGame()
     {
@@ -69,6 +84,6 @@ public class MySceneManager : MonoBehaviour
     //Final call before Quitting
     private void OnApplicationQuit()
     {
-        //GameDataManager.SaveGlobalStats("Save.json");
+
     }
 }
