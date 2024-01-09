@@ -27,6 +27,7 @@ using UnityEngine.Events;
  *  29.12.2023   FM  created
  *  30.12.2023   FM  implemented SaveData() and LoadData() to load and save data with PlayerPrefs; removed CreateSaveKey()
  *  01.01.2023   FM  added timesLaunched
+ *  09.01.2023   FM  adjusted s_maxSaveFiles, updated deletion of PlayerPrefs condition
  *  
  *  TODO: 
  *      - Save PCG values
@@ -38,7 +39,7 @@ using UnityEngine.Events;
 public static class SavingService
 {
     private static int s_saveID;
-    private static int s_maxSaveFiles = 100;
+    private static int s_maxSaveFiles = 5000; //note that per save instance currently 5 values are save at a time, the max save space PlayerPrefs allowed is 1MB, which equals ~58250 files
     private static string s_distanceTravelledKey = "distance";
     private static string s_deathCounterKey = "deathCounter";
     private static string s_playerTypeKey = "playerType";
@@ -60,8 +61,8 @@ public static class SavingService
         while (PlayerPrefs.HasKey(distance_key))
         {
             s_saveID++;
-            //Delete save files to avoid overflow
-            if(s_saveID >= s_maxSaveFiles)
+            //Delete save files to avoid overflow | the number represents the amount of save files per save id
+            if(s_saveID * 5 >= s_maxSaveFiles)
             {
                 Debug.Log("Deleting save files");
                 PlayerPrefs.DeleteAll();

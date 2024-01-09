@@ -24,6 +24,7 @@ using UnityEngine;
  *  31.12.2023   FM  edited methods; implemented UpdateDifficulty() properly;
  *                   added public accessible fields for the adjusted values
  *  02.01.2023   FM  implemented CalculatePlayerType()
+ *  09.01.2023   FM  fixed minor issues, updated CalculatePlayerType()
  *  
  *  
  *  TODO: 
@@ -60,9 +61,6 @@ public static class DynamicDifficultyAdjuster
     private const int c_minAmountOfSaveFilesToUpdatePlayerSkillLevel = 1;
     private const int c_minAmountOfSaveFilesToUpdatePlayerType = 4;
 
-    private const int c_weight5 = 5;
-    private const int c_weight10 = 10;
-    private const int c_weight30 = 30;
 
 
 
@@ -79,16 +77,18 @@ public static class DynamicDifficultyAdjuster
         {
             //Calculate average distance reached
             s_distanceReachedAverage = CalculateDistanceAverage(game_data.Item1);
-            //Get values assigned to player types and skill levels
+            //Assign PlayerSkillLevel
             PlayerSkillLevel = CalculatePlayerSkillLevel(s_distanceReachedAverage, game_data.Item4);
             Debug.Log("Updated player skill level: " + PlayerSkillLevel);
             if (game_data.Item1.Length > c_minAmountOfSaveFilesToUpdatePlayerType)
             {
+                //Assign PlayerType
                 PlayerType = CalculatePlayerType(s_distanceReachedAverage, game_data.Item2, game_data.Item3, game_data.Item4, game_data.Item5);
                 Debug.Log("Updated player type: " + PlayerType);
             }
+            //Update DDA factors accessed by other classes
             (float, float) player_type_and_skill_level_factor = CalculateFactors(PlayerType, PlayerSkillLevel);
-            //Update values accessed by game objects
+            //Assign values accessed by game objects
             UpdateSpeedModifier(player_type_and_skill_level_factor.Item1, player_type_and_skill_level_factor.Item2);
             UpdateObstacleDensity(player_type_and_skill_level_factor.Item1, player_type_and_skill_level_factor.Item2);
         }
@@ -173,19 +173,20 @@ public static class DynamicDifficultyAdjuster
     /// <returns>average distance</returns>
     private static float CalculateDistanceAverage(float[] _distancesReachedArr)
     {
+        float new_distance_average = 0f;
         //Get average distance reached
         int counter = 0;
         for (int i = 0; i < _distancesReachedArr.Length; i++)
         {
-            s_distanceReachedAverage += _distancesReachedArr[i];
+            new_distance_average += _distancesReachedArr[i];
             counter++;
         }
         if (counter != 0)
         {
-            s_distanceReachedAverage /= counter;
+            new_distance_average /= counter;
         }
-        Debug.Log("Distance average: " + s_distanceReachedAverage);
-        return s_distanceReachedAverage;
+        Debug.Log("Distance average: " + new_distance_average);
+        return new_distance_average;
     }
 
     /// <summary>
@@ -193,19 +194,19 @@ public static class DynamicDifficultyAdjuster
     /// </summary>
     private static EPlayerSkillLevel CalculatePlayerSkillLevel(float _distanceReachedAverage, EPlayerSkillLevel[] _playerSkillLevelArr)
     {
-        if (s_distanceReachedAverage < c_beginnerThreshold)
+        if (_distanceReachedAverage < c_beginnerThreshold)
         {
             return EPlayerSkillLevel.NOOB;
         }
-        else if (s_distanceReachedAverage < c_intermediateThreshold)
+        else if (_distanceReachedAverage < c_intermediateThreshold)
         {
             return EPlayerSkillLevel.BEGINNER;
         }
-        else if (s_distanceReachedAverage < c_advancedThreshold)
+        else if (_distanceReachedAverage < c_advancedThreshold)
         {
             return EPlayerSkillLevel.INTERMEDIATE;
         }
-        else if (s_distanceReachedAverage < c_expertThreshold)
+        else if (_distanceReachedAverage < c_expertThreshold)
         {
             return EPlayerSkillLevel.ADVANCED;
         }
@@ -215,35 +216,64 @@ public static class DynamicDifficultyAdjuster
     /// <summary>
     /// This function has to be called before starting a new game to calculate 
     /// the current playertype, so it can be used to update the difficulty accordingly
+    /// If probability is negative -> return EPlayerType.EASY_FUN else return EPlayerType.HARD_FUN
     /// </summary>
     private static EPlayerType CalculatePlayerType(float _distanceReachedAverage, int[] _deathCounterArr, EPlayerType[] _playerTypeArr, EPlayerSkillLevel[] _playerSkillArr, int[] _timesLaunched)
     {
         EPlayerType new_player_type = EPlayerType.NONE;
-        EPlayerType last_player_type = _playerTypeArr[_playerTypeArr.Length-1];
-        EPlayerSkillLevel last_player_skill_level = _playerSkillArr[_playerSkillArr.Length-1];
-        //get an earlier value in the skill array if the array is long enough
-        int earlier_player_skill_level_index = _playerSkillArr.Length - 3 >= 0 ? _playerSkillArr.Length - 3 : _playerSkillArr.Length;
-        EPlayerSkillLevel earlier_player_skill_level = _playerSkillArr[earlier_player_skill_level_index];
-        //TODO: ADD times launched / death counter factor
+        int probabilty = 0;
+
+        EPlayerType last_player_type = _playerTypeArr[_playerTypeArr.Length-1];                            //Latest player type
+       
+        EPlayerSkillLevel last_player_skill_level = _playerSkillArr[_playerSkillArr.Length-1];             //Latest skill level
+        int third_last_player_skill_level_index = _playerSkillArr.Length - 3 >= 0
+            ? _playerSkillArr.Length - 3 : int.MaxValue;                                                   //Earlier skill index
+        EPlayerSkillLevel third_last_player_skill_level = (third_last_player_skill_level_index != 
+            int.MaxValue ? _playerSkillArr[_playerSkillArr.Length - 3] : EPlayerSkillLevel.NONE);          //Earlier value to compare to if it exists | used int.MaxValue to work as a nullcheck here since int isn't nullable
+
+        int last_times_launched_counter = _timesLaunched[_timesLaunched.Length - 1];                       //Latest counter of how many times the game was launched
+        int third_last_times_launched_counter_index = _timesLaunched.Length - 3 >= 0 ?
+            _timesLaunched.Length - 3 : int.MaxValue;
+                                             
+
         int last_death_counter = _deathCounterArr[_deathCounterArr.Length - 1];
-        int probabilty = 50;
-        //Assign higher probabilities to keep the previously calculated player type
+
+        //Increases probability -> higher chance for HARD_FUN 
+        //Decreases probability -> higher chance for EASY_FUN 
+
+        //Chance to keep the previously calculated player type
         if (last_player_type == EPlayerType.EASY_FUN)
         {
-            probabilty+=c_weight30;
-        }else if(last_player_type == EPlayerType.HARD_FUN)
+            probabilty += Weights.c_weight30;
+        } else if (last_player_type == EPlayerType.HARD_FUN)
         {
-            probabilty-=c_weight30;
+            probabilty -= Weights.c_weight30;
         }
-        //Increases probability for HARD_FUN if last skill level was ADVANCED or higher
-        //Decreases probability for EASY_FUN if last skill level was BEGINNER or lower
-        probabilty += ((int)last_player_skill_level - 2) * c_weight10;
-        //Same as previous step, with an earlier calculated skill level and lower weights
-        probabilty += ((int) earlier_player_skill_level - 2) * c_weight5;
-        //Increase probability for HARD_FUN if distanceReachedAverage is higher than intermediateThreshold
-        probabilty += (_distanceReachedAverage >= c_intermediateThreshold ? 1 : -1) * c_weight10;
-        //Calculate playerType
-        new_player_type = (probabilty < 50) ? (PlayerType = EPlayerType.EASY_FUN) : (PlayerType = EPlayerType.HARD_FUN);
+        //Increase probability for freshest calculated skill level if HIGHER than INTERMEDIATE
+        //Decrease probability for freshest calculated skill level if LOWER than INTERMEDIATE
+        //Add nothing if freshest calculated skill level was INTERMEDIATE
+        probabilty += ((int)last_player_skill_level - 2) * Weights.c_weight10;
+        if(third_last_player_skill_level != int.MaxValue)
+        {
+            //Same as previous step, with an earlier calculated skill level (if possible) and lower weights
+            probabilty += ((int)third_last_player_skill_level - 2) * Weights.c_weight5;
+        }
+        //Increase probability if _distanceReachedAverage is BIGGER or EQUAL to c_intermediateThreshold
+        //Decrease probability if _distanceReachedAverage is SMALLER than c_intermediateThreshold
+        probabilty += (_distanceReachedAverage >= c_intermediateThreshold ? 1 : -1) * Weights.c_weight10;
+
+        //"Null" check
+        if (third_last_times_launched_counter_index != int.MaxValue)
+        {
+            int third_last_times_launched_counter = _timesLaunched[_timesLaunched.Length - 3];
+            //Increase probability if same game session within 3 games
+            //Decrease probability if different game session within 3 games
+            probabilty += (last_times_launched_counter == third_last_times_launched_counter ? 1 : -1) * Weights.c_weight20;
+
+        }
+
+        //Calculate player type, if <= 0 -> EASY_FUN, else HARD_FUN
+        new_player_type = (probabilty <= 0) ? (new_player_type = EPlayerType.EASY_FUN) : (new_player_type = EPlayerType.HARD_FUN);
         return new_player_type;
     }
 
@@ -272,5 +302,16 @@ public enum EPlayerType
     NONE = -1,
     EASY_FUN = 1,
     HARD_FUN = 2,
+}
+
+/// <summary>
+/// different weight values to increase the bias towards one or another outcome
+/// </summary>
+public static class Weights
+{
+    public const int c_weight5 = 5;
+    public const int c_weight10 = 10;
+    public const int c_weight20 = 20;
+    public const int c_weight30 = 30;
 }
 
