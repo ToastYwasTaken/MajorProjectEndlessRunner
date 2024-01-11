@@ -1,5 +1,4 @@
 using System;
-using LitJson;
 using UnityEngine;
 /******************************************************************************
  * Project: MajorProjectEndlessRunner
@@ -128,7 +127,7 @@ public class PlayerController : MonoBehaviour
         m_speedModifier = DynamicDifficultyAdjuster.SpeedModifier;
         m_playerSkillLevel = DynamicDifficultyAdjuster.PlayerSkillLevel;
         m_playerType = DynamicDifficultyAdjuster.PlayerType;
-        Debug.Log("DC: " + m_deathCounter + " - speed mod: " + m_speedModifier + " - playerSkill: " + m_playerSkillLevel + " - playerType: " + m_playerType);
+        Debug.Log("DeathCounter: " + m_deathCounter + " - speed mod: " + m_speedModifier + " - playerSkill: " + m_playerSkillLevel + " - playerType: " + m_playerType);
     }
 
     void Update()

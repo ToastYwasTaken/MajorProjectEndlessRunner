@@ -54,12 +54,12 @@ public static class DynamicDifficultyAdjuster
 
     private static float s_distanceReachedAverage;
 
-    private const float c_beginnerThreshold = 600f; //about the distance to get to EASY (blue templates)
+    private const float c_beginnerThreshold = 600f; // = about the distance to get to EASY (blue templates)
     private const float c_intermediateThreshold = 1200f;
     private const float c_advancedThreshold = 2500f;
     private const float c_expertThreshold = 4000f;
-    private const int c_minAmountOfSaveFilesToUpdatePlayerSkillLevel = 1;
-    private const int c_minAmountOfSaveFilesToUpdatePlayerType = 4;
+    private const int c_minAmountOfSaveFilesToUpdatePlayerSkillLevel = 1; //after min x save files the player skill level is generated
+    private const int c_minAmountOfSaveFilesToUpdatePlayerType = 4; //after min x save files the player type is generated
 
 
 
@@ -152,7 +152,7 @@ public static class DynamicDifficultyAdjuster
     private static void UpdateSpeedModifier(float _playerTypeFactor, float _playerSkillFactor)
     {
         SpeedModifier = _playerTypeFactor * _playerSkillFactor;
-        Debug.Log("New speed mod: " + SpeedModifier);
+        //Debug.Log("New speed mod: " + SpeedModifier);
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public static class DynamicDifficultyAdjuster
     private static void UpdateObstacleDensity(float _playerTypeFactor, float _playerSkillFactor)
     {
         ObstacleDensity = _playerTypeFactor * _playerSkillFactor;
-        Debug.Log("New speed mod: " + SpeedModifier);
+        //Debug.Log("New obstacle density: " + SpeedModifier);
     }
 
     /// <summary>
@@ -223,18 +223,19 @@ public static class DynamicDifficultyAdjuster
         EPlayerType new_player_type = EPlayerType.NONE;
         int probabilty = 0;
 
-        EPlayerType last_player_type = _playerTypeArr[_playerTypeArr.Length-1];                            //Latest player type
-       
-        EPlayerSkillLevel last_player_skill_level = _playerSkillArr[_playerSkillArr.Length-1];             //Latest skill level
-        int third_last_player_skill_level_index = _playerSkillArr.Length - 3 >= 0
-            ? _playerSkillArr.Length - 3 : int.MaxValue;                                                   //Earlier skill index
-        EPlayerSkillLevel third_last_player_skill_level = (third_last_player_skill_level_index != 
-            int.MaxValue ? _playerSkillArr[_playerSkillArr.Length - 3] : EPlayerSkillLevel.NONE);          //Earlier value to compare to if it exists | used int.MaxValue to work as a nullcheck here since int isn't nullable
+        //Latest player type
+        EPlayerType last_player_type = _playerTypeArr[_playerTypeArr.Length-1];
 
-        int last_times_launched_counter = _timesLaunched[_timesLaunched.Length - 1];                       //Latest counter of how many times the game was launched
-        int third_last_times_launched_counter_index = _timesLaunched.Length - 3 >= 0 ?
-            _timesLaunched.Length - 3 : int.MaxValue;
-                                             
+        //Latest skill level
+        EPlayerSkillLevel last_player_skill_level = _playerSkillArr[_playerSkillArr.Length-1];
+        //Earlier value to compare to if it exists | assigns NONE if index is invalid
+        EPlayerSkillLevel third_last_player_skill_level = (_playerSkillArr.Length - 4 >= 0 ? _playerSkillArr[_playerSkillArr.Length - 4] : EPlayerSkillLevel.NONE);
+
+        //Latest counter of how many times the game was launched
+        int last_times_launched_counter = _timesLaunched[_timesLaunched.Length - 1];
+
+        //Earlier value to compare to if it exists | assigns -1 if index is invalid
+        int fifth_last_times_launched_counter = _timesLaunched.Length - 6 >= 0 ? _timesLaunched[_timesLaunched.Length - 6] : -1;
 
         int last_death_counter = _deathCounterArr[_deathCounterArr.Length - 1];
 
@@ -249,30 +250,37 @@ public static class DynamicDifficultyAdjuster
         {
             probabilty -= Weights.c_weight30;
         }
+        Debug.Log("Probability after step 1: " + probabilty);
+
         //Increase probability for freshest calculated skill level if HIGHER than INTERMEDIATE
         //Decrease probability for freshest calculated skill level if LOWER than INTERMEDIATE
         //Add nothing if freshest calculated skill level was INTERMEDIATE
         probabilty += ((int)last_player_skill_level - 2) * Weights.c_weight10;
-        if(third_last_player_skill_level != int.MaxValue)
+        Debug.Log("Probability after step 2: " + probabilty);
+
+        //Validity check
+        if (third_last_player_skill_level != EPlayerSkillLevel.NONE)
         {
-            //Same as previous step, with an earlier calculated skill level (if possible) and lower weights
+            //Same as previous step, with an EARLIER calculated skill level (if possible) and lower weights
             probabilty += ((int)third_last_player_skill_level - 2) * Weights.c_weight5;
         }
+        Debug.Log("Probability after step 3: " + probabilty);
+
         //Increase probability if _distanceReachedAverage is BIGGER or EQUAL to c_intermediateThreshold
         //Decrease probability if _distanceReachedAverage is SMALLER than c_intermediateThreshold
         probabilty += (_distanceReachedAverage >= c_intermediateThreshold ? 1 : -1) * Weights.c_weight10;
+        Debug.Log("Probability after step 4: " + probabilty);
 
-        //"Null" check
-        if (third_last_times_launched_counter_index != int.MaxValue)
-        {
-            int third_last_times_launched_counter = _timesLaunched[_timesLaunched.Length - 3];
-            //Increase probability if same game session within 3 games
-            //Decrease probability if different game session within 3 games
-            probabilty += (last_times_launched_counter == third_last_times_launched_counter ? 1 : -1) * Weights.c_weight20;
-
+        //Validity check
+        if (fifth_last_times_launched_counter != -1)
+        {    
+            //Increase probability if same game session within x games
+            //Decrease probability if different game session within x games
+            probabilty += (last_times_launched_counter == fifth_last_times_launched_counter ? 1 : -1) * Weights.c_weight20;
         }
+        Debug.Log("Probability after step 5: " + probabilty);
 
-        //Calculate player type, if <= 0 -> EASY_FUN, else HARD_FUN
+        //Calculate player type according to probability, if <= 0 -> EASY_FUN, else HARD_FUN
         new_player_type = (probabilty <= 0) ? (new_player_type = EPlayerType.EASY_FUN) : (new_player_type = EPlayerType.HARD_FUN);
         return new_player_type;
     }
