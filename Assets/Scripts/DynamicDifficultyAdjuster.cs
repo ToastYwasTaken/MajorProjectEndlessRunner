@@ -48,18 +48,20 @@ public static class DynamicDifficultyAdjuster
     public static int DeathCounter { get { return s_deathCounter; } private set { s_deathCounter = value; } }
     private static int s_deathCounter = 0;
     public static float ObstacleDensity { get { return s_obstacleDensity; } private set { s_obstacleDensity = value; } }
-    private static float s_obstacleDensity = 1f;
+    private static float s_obstacleDensity = 1.0f;
     public static int TimesLaunched { get { return s_timesLaunched; } private set { s_timesLaunched = value; } }
     private static int s_timesLaunched = 0;
 
     private static float s_distanceReachedAverage;
 
-    private const float c_beginnerThreshold = 600f; // = about the distance to get to EASY (blue templates)
+    private const float c_beginnerThreshold = 600f;     // = about the distance to get to EASY (blue templates)
     private const float c_intermediateThreshold = 1200f;
     private const float c_advancedThreshold = 2500f;
     private const float c_expertThreshold = 4000f;
-    private const int c_minAmountOfSaveFilesToUpdatePlayerSkillLevel = 1; //after min x save files the player skill level is generated
-    private const int c_minAmountOfSaveFilesToUpdatePlayerType = 4; //after min x save files the player type is generated
+    private const int c_minAmountOfSaveFilesToUpdatePlayerSkillLevel = 1;   //after min x save files the player skill level is generated
+    private const int c_minAmountOfSaveFilesToUpdatePlayerType = 4;     //after min x save files the player type is generated
+    private const float c_obstacleDensityFactor = 1.05f;    //determines the scale of relative increase of the obstacleDenisty
+    private const float c_speedModifierFactor = 1.1f;      //determines the scale of relative increase of the obstacleDenisty
 
 
 
@@ -69,9 +71,10 @@ public static class DynamicDifficultyAdjuster
     /// </summary>
     public static void UpdateDifficulty()
     {
-        //Load saved data
+        //Step 1: Load saved data
         (float[], int[], EPlayerType[], EPlayerSkillLevel[], int[]) game_data = SavingService.LoadData();
 
+        //Step 2 and 3: Calculate updated values and assign them locally
         //Do skill and type adjustments only if minAmount of save files exist
         if (game_data.Item1.Length > c_minAmountOfSaveFilesToUpdatePlayerSkillLevel)
         {
@@ -86,11 +89,14 @@ public static class DynamicDifficultyAdjuster
                 PlayerType = CalculatePlayerType(s_distanceReachedAverage, game_data.Item2, game_data.Item3, game_data.Item4, game_data.Item5);
                 Debug.Log("Updated player type: " + PlayerType);
             }
-            //Update DDA factors accessed by other classes
-            (float, float) player_type_and_skill_level_factor = CalculateFactors(PlayerType, PlayerSkillLevel);
-            //Assign values accessed by game objects
-            UpdateSpeedModifier(player_type_and_skill_level_factor.Item1, player_type_and_skill_level_factor.Item2);
-            UpdateObstacleDensity(player_type_and_skill_level_factor.Item1, player_type_and_skill_level_factor.Item2);
+            //Step 4: Update DDA factors accessed by other classes
+            if (PlayerType != EPlayerType.NONE && PlayerSkillLevel != EPlayerSkillLevel.NONE)
+            {
+                (float, float) player_type_and_skill_level_factor = CalculateFactors(PlayerType, PlayerSkillLevel);
+                //Step 5: Assign values accessed by game objects
+                SpeedModifier = CalculateModifier(player_type_and_skill_level_factor.Item1, player_type_and_skill_level_factor.Item2, c_speedModifierFactor);
+                ObstacleDensity = CalculateModifier(player_type_and_skill_level_factor.Item1, player_type_and_skill_level_factor.Item2, c_obstacleDensityFactor);
+            }
         }
         //Update death counter
         if (game_data.Item2.Length > 0)
@@ -145,26 +151,18 @@ public static class DynamicDifficultyAdjuster
 
 
     /// <summary>
-    /// Adjusts the speedModifier by inputting the old speedModifier and updating it 
-    /// according to the player type and skill level
+    /// Adjusts the input modifier byupdating it according to the player type and skill level
     /// Only updates the modifier if a non default playerType and playerSkillLevel are given
     /// </summary>
-    private static void UpdateSpeedModifier(float _playerTypeFactor, float _playerSkillFactor)
+    private static float CalculateModifier(float _playerTypeFactor, float _playerSkillFactor, float _modifierFactor)
     {
-        SpeedModifier = _playerTypeFactor * _playerSkillFactor;
-        //Debug.Log("New speed mod: " + SpeedModifier);
+        float modifier = (_playerTypeFactor * _playerSkillFactor) >1 
+            ? modifier = (_playerTypeFactor * _playerSkillFactor * _modifierFactor) 
+            : (_playerTypeFactor * _playerSkillFactor / _modifierFactor);
+        //Debug.Log("New speed mod: " + modifier);
+        return modifier;
     }
 
-    /// <summary>
-    /// Adjusts the obstacleDensity by inputting the old speedModifier and updating it 
-    /// according to the player type and skill level
-    /// Only updates the modifier if a non default playerType and playerSkillLevel are given
-    /// </summary>
-    private static void UpdateObstacleDensity(float _playerTypeFactor, float _playerSkillFactor)
-    {
-        ObstacleDensity = _playerTypeFactor * _playerSkillFactor;
-        //Debug.Log("New obstacle density: " + SpeedModifier);
-    }
 
     /// <summary>
     /// Calculates distance average

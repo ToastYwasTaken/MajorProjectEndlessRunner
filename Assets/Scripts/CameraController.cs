@@ -16,6 +16,7 @@ using UnityEngine;
  * ChangeLog
  * ----------------------------
  *  18.08.2023   FM  created
+ *  17.01.2023   FM  adjusted camera in inspector
  *  
  *****************************************************************************/
 public class CameraController : MonoBehaviour

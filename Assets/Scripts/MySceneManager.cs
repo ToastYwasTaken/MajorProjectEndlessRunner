@@ -58,6 +58,7 @@ public class MySceneManager : MonoBehaviour
     public void LoadPlayMode()
     {
         DynamicDifficultyAdjuster.UpdateDifficulty();
+        LockCursor();
         SceneManager.LoadScene("PlayMode");
     }
     public void LoadGameOver()
@@ -65,6 +66,7 @@ public class MySceneManager : MonoBehaviour
         m_playerGO = GameObject.FindGameObjectWithTag("Player");
         m_playerRef = m_playerGO.GetComponent<PlayerController>();
         SavingService.SaveData(m_playerRef.PlayerPosition.z, m_playerRef.DeathCounter, m_playerRef.PlayerType , m_playerRef.PlayerSkillLevel, m_timesLaunched);
+        ShowCursor();
         SceneManager.LoadScene("GameOver");
     }
     public void LoadMainMenu()
@@ -80,10 +82,15 @@ public class MySceneManager : MonoBehaviour
     {
         Application.Quit();
     }
-
-    //Final call before Quitting
-    private void OnApplicationQuit()
+    private void LockCursor()
     {
-
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
+    private void ShowCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
 }
