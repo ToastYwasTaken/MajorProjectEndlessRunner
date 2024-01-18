@@ -28,7 +28,7 @@ using UnityEngine;
  *  
  *  
  *  TODO: 
- *      - add proper dda calculation
+ *      - add proper dda calculation - DONE
  *      
  *  Buglist:
  *      - 

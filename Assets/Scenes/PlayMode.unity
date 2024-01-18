@@ -331,15 +331,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1440765237}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9de674e29d06664cbbddb788c2037ce, type: 3}
+  m_Script: {fileID: 11500000, guid: 595da3f6b8b438b4eb26d96af311d3e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   gameModeControllerGO: {fileID: 1767342338}
   playerGO: {fileID: 540864214}
-  renderDistance: 100
-  obstacleDensity: 0.8
-  overlapBoxScale: {x: 3, y: 2, z: 2}
-  rerollBoxScale: {x: 7.5, y: 2, z: 7.5}
+  renderDistance: 200
+  overlapBoxScale: {x: 1, y: 1, z: 1}
+  rerollBoxScale: {x: 3, y: 3, z: 3}
   rayCastLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -355,7 +354,7 @@ GameObject:
   - component: {fileID: 1767342339}
   - component: {fileID: 1767342340}
   m_Layer: 0
-  m_Name: GameModes
+  m_Name: GameModController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -425,7 +424,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3c02d27e2f27bb4e918a0f7b042b23f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerGO: {fileID: 540864214}
 --- !u!4 &1860400433
 Transform:
   m_ObjectHideFlags: 0

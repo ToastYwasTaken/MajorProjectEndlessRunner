@@ -65,7 +65,7 @@ public class PlayerController : MonoBehaviour
 
     #region constants
     private const float c_jumpForce = 10f;    //jump force multiplier
-    private const float c_startingAccellerationVertical = 0.05f; //accelleration moving forward
+    private const float c_startingAccellerationVertical = 0.1f; //accelleration moving forward
     private const float c_rbMass = 1f;
     private const float c_fallspeedMultiplier = 2.8f;
     private const float c_gravityConstant = -9.81f;
@@ -118,6 +118,7 @@ public class PlayerController : MonoBehaviour
         m_rb = transform.GetComponent<Rigidbody>();
         m_rb.mass = c_rbMass;
 
+        //smoother and slower movement left and right
         m_startingAccellerationHorizontal = c_startingAccellerationVertical / 2;
         //Set player spawn values
         transform.position = new Vector3(0,1.5f,0);
@@ -141,6 +142,7 @@ public class PlayerController : MonoBehaviour
     {
         ApplyDefaultGravity();
         //Setting up keyInputs, Ignoring vertical movement inputs
+        //TODO: Fix sticking to walls
         m_keyInput = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
         //Apply user input horizontal movement, continous vertical movement and jump movement
         m_rb.velocity = new Vector3(speedHorizontal * m_keyInput.x, rbVelocityY, m_speedVertical);
