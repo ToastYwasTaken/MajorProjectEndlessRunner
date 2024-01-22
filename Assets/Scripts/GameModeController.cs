@@ -130,39 +130,31 @@ public class GameModeController : MonoBehaviour
     /// </summary>
     private void UpdateGameMode()
     {
-        //rounded value needed to avoid skipping hitting a threshold
-        double playerSpeedRounded = Math.Round(m_playerSpeed, 2);
-        //Debug.Log(playerSpeedRounded + "   " + speedThresholdVeryEasy);
-        if (playerSpeedRounded == speedThresholdVeryEasy)
+        if (m_playerSpeed >= speedThresholdExtreme)
         {
-            m_currentGameMode = EGameModes.VERY_EASY;
-            Debug.Log("Hit very easy speed threshold");
+            currentGameMode = EGameModes.EXTREME;
         }
-        else if (playerSpeedRounded == speedThresholdEasy)
+        else if (m_playerSpeed >= speedThresholdVeryHard)
         {
-            m_currentGameMode = EGameModes.EASY;
-            Debug.Log("Hit easy speed threshold");
+            currentGameMode = EGameModes.VERY_HARD;
         }
-        else if (playerSpeedRounded == speedThresholdMedium)
+        else if (m_playerSpeed >= speedThresholdHard)
         {
-            m_currentGameMode = EGameModes.MEDIUM;
-            Debug.Log("Hit medium speed threshold");
+            currentGameMode = EGameModes.HARD;
         }
-        else if (playerSpeedRounded == speedThresholdHard)
+        else if (m_playerSpeed >= speedThresholdMedium)
         {
-            m_currentGameMode = EGameModes.HARD;
-            Debug.Log("Hit hard speed threshold");
+            currentGameMode = EGameModes.MEDIUM;
         }
-        else if (playerSpeedRounded == speedThresholdVeryHard)
+        else if (m_playerSpeed >= speedThresholdEasy)
         {
-            m_currentGameMode = EGameModes.VERY_HARD;
-            Debug.Log("Hit very hard speed threshold");
+            currentGameMode = EGameModes.EASY;
         }
-        else if(playerSpeedRounded == speedThresholdExtreme)
+        else if (m_playerSpeed >= speedThresholdVeryEasy)
         {
-            m_currentGameMode = EGameModes.EXTREME;
-            Debug.Log("Hit extreme speed threshold");
+            currentGameMode = EGameModes.VERY_EASY;
         }
+        Debug.Log("Current GM: " +currentGameMode);
     }
 
 }

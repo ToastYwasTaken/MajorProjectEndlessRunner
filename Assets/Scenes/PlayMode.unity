@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -391,9 +391,9 @@ MonoBehaviour:
   speedThresholdVeryEasy: 10
   speedThresholdEasy: 11
   speedThresholdMedium: 13
-  speedThresholdHard: 15
-  speedThresholdVeryHard: 17
-  speedThresholdExtreme: 20
+  speedThresholdHard: 16
+  speedThresholdVeryHard: 19
+  speedThresholdExtreme: 22
   mySceneManagerGO: {fileID: 1860400431}
 --- !u!1 &1860400431
 GameObject:
@@ -546,7 +546,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
       propertyPath: speedHorizontal
-      value: 9
+      value: 9.8
       objectReference: {fileID: 0}
     - target: {fileID: 6507160762885226216, guid: c29ec9b8162e1404c9f6e49b6d61b5ad, type: 3}
       propertyPath: gameModeControllerGO

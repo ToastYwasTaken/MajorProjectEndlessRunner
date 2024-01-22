@@ -6,7 +6,7 @@ ScriptsOnlyBuild:
     - MySceneManager
     - ObjectSpawner
     - PlayerController
-    - ProceduralGeneration
+    - ProceduralGenerator
     Unity.Rider.Editor.dll:
     - Packages.Rider.Editor.UnitTesting.CallbackData
     Unity.TextMeshPro:
@@ -69,6 +69,9 @@ ScriptsOnlyBuild:
     methodName: LoadPlayMode
   - assembly: Assembly-CSharp
     fullTypeName: MySceneManager
+    methodName: DeleteDDAData
+  - assembly: Assembly-CSharp
+    fullTypeName: MySceneManager
     methodName: LoadPlayMode
   - assembly: Assembly-CSharp
     fullTypeName: MySceneManager
@@ -106,13 +109,13 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 3056}
     - Class: 114
-      Script: {instanceID: 4964}
+      Script: {instanceID: 4966}
     - Class: 114
-      Script: {instanceID: 5648}
+      Script: {instanceID: 5650}
     - Class: 114
-      Script: {instanceID: 5960}
+      Script: {instanceID: 5962}
     - Class: 114
-      Script: {instanceID: 6658}
+      Script: {instanceID: 6662}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -175,15 +178,15 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 4028}
     - Class: 114
-      Script: {instanceID: 4276}
+      Script: {instanceID: 4278}
     - Class: 114
-      Script: {instanceID: 4964}
+      Script: {instanceID: 4966}
     - Class: 114
-      Script: {instanceID: 5648}
+      Script: {instanceID: 5650}
     - Class: 114
-      Script: {instanceID: 5960}
+      Script: {instanceID: 5962}
     - Class: 114
-      Script: {instanceID: 6658}
+      Script: {instanceID: 6662}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -238,17 +241,17 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 4080}
     - Class: 114
-      Script: {instanceID: 4556}
+      Script: {instanceID: 4276}
     - Class: 114
-      Script: {instanceID: 5946}
+      Script: {instanceID: 4558}
     - Class: 114
-      Script: {instanceID: 5960}
+      Script: {instanceID: 5948}
     - Class: 114
-      Script: {instanceID: 6428}
+      Script: {instanceID: 5962}
     - Class: 114
-      Script: {instanceID: 6658}
+      Script: {instanceID: 6430}
     - Class: 114
-      Script: {instanceID: 7360}
+      Script: {instanceID: 6662}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 136
@@ -644,7 +647,7 @@ ScriptsOnlyBuild:
     className: UnityOnJointBreak2DMessageListener
   - hash:
       serializedVersion: 2
-      Hash: 24ea0e82db7b1d273a2df74c2d632d0b
+      Hash: c10de93ad2522a5f796dacb50eb0cb4e
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: PlayerController
@@ -660,6 +663,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.TextMeshPro
     namespaceName: TMPro
     className: TMP_SubMeshUI
+  - hash:
+      serializedVersion: 2
+      Hash: 2c4d243df4b27c45a892cbe72f911c8b
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: ProceduralGenerator
   - hash:
       serializedVersion: 2
       Hash: fcc569162a8d9bd9df34e8c9dee84212
@@ -926,7 +935,7 @@ ScriptsOnlyBuild:
     className: VerticalLayoutGroup
   - hash:
       serializedVersion: 2
-      Hash: 9a5f8b5d0da1018a28f1a291c8429122
+      Hash: d5afadd3b7fe03c1f157e8d72d9d8cdd
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: GameModeController
@@ -1074,12 +1083,6 @@ ScriptsOnlyBuild:
     assemblyName: Unity.TextMeshPro
     namespaceName: TMPro
     className: TMP_ScrollbarEventHandler
-  - hash:
-      serializedVersion: 2
-      Hash: 4a94d595d19ee8736911b9f4e58a3e29
-    assemblyName: Assembly-CSharp
-    namespaceName: 
-    className: ProceduralGeneration
   - hash:
       serializedVersion: 2
       Hash: afe1800287c9574079eab3fea2622416
