@@ -130,31 +130,37 @@ public class GameModeController : MonoBehaviour
     /// </summary>
     private void UpdateGameMode()
     {
-        if (m_playerSpeed >= speedThresholdExtreme)
+        //rounded value needed to avoid skipping hitting a threshold
+        double playerSpeedRounded = Math.Round(m_playerSpeed, 2);
+        //Debug.Log(playerSpeedRounded + "   " + speedThresholdVeryEasy);
+        if (playerSpeedRounded == speedThresholdVeryEasy)
         {
-            currentGameMode = EGameModes.EXTREME;
-        }
-        else if (m_playerSpeed >= speedThresholdVeryHard)
+            m_currentGameMode = EGameModes.VERY_EASY;
+            Debug.Log("Hit very easy speed threshold");
+        }else if(playerSpeedRounded == speedThresholdEasy) 
         {
-            currentGameMode = EGameModes.VERY_HARD;
-        }
-        else if (m_playerSpeed >= speedThresholdHard)
+            m_currentGameMode = EGameModes.EASY;
+            Debug.Log("Hit easy speed threshold");
+        }else if (playerSpeedRounded == speedThresholdMedium)
         {
-            currentGameMode = EGameModes.HARD;
-        }
-        else if (m_playerSpeed >= speedThresholdMedium)
+            m_currentGameMode = EGameModes.MEDIUM;
+            Debug.Log("Hit medium speed threshold");
+        }else if (playerSpeedRounded == speedThresholdHard)
         {
-            currentGameMode = EGameModes.MEDIUM;
-        }
-        else if (m_playerSpeed >= speedThresholdEasy)
+            m_currentGameMode = EGameModes.HARD;
+            Debug.Log("Hit hard speed threshold");
+        }else if(playerSpeedRounded == speedThresholdVeryHard)
         {
-            currentGameMode = EGameModes.EASY;
-        }
-        else if (m_playerSpeed >= speedThresholdVeryEasy)
+            m_currentGameMode = EGameModes.VERY_HARD;
+            Debug.Log("Hit very hard speed threshold");
+        }else if(playerSpeedRounded == speedThresholdExtreme)
         {
-            currentGameMode = EGameModes.VERY_EASY;
+            m_currentGameMode = EGameModes.EXTREME;
+            Debug.Log("Hit extreme speed threshold");
         }
+
         Debug.Log("Current GM: " +currentGameMode);
+
     }
 
 }

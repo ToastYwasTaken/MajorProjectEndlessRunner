@@ -200,16 +200,10 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground")) 
         {
             isGrounded = true;
-        }else if(collision.gameObject.CompareTag("WallLeft"))
-        {
-            rbVelocityY = 0f;
         }
-        else if (collision.gameObject.CompareTag("WallRight"))
+        if (collision.gameObject.CompareTag("Obstacle"))
         {
-            rbVelocityY = 0f;
-        }
-        else if (collision.gameObject.CompareTag("Obstacle"))
-        {
+            Debug.Log("hit obstacle");
             m_deathCounter++;
             m_gameModeControllerRef.currentGameMode = EGameModes.GAMEOVER;
         }

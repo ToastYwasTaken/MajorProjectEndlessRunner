@@ -72,6 +72,9 @@ ScriptsOnlyBuild:
     methodName: DeleteDDAData
   - assembly: Assembly-CSharp
     fullTypeName: MySceneManager
+    methodName: ExitGame
+  - assembly: Assembly-CSharp
+    fullTypeName: MySceneManager
     methodName: LoadPlayMode
   - assembly: Assembly-CSharp
     fullTypeName: MySceneManager
@@ -1124,4 +1127,5 @@ ScriptsOnlyBuild:
   - Assets/Scenes/MainMenu.unity
   - Assets/Scenes/PlayMode.unity
   - Assets/Scenes/GameOver.unity
-  playerPath: C:/Users/x79/Documents/GitHub/MajorProjectEndlessRunner/Build2/My project.exe
+  playerPath: C:/Users/x79/Documents/GitHub/MajorProjectEndlessRunner/Prototype 2/My
+    project.exe
